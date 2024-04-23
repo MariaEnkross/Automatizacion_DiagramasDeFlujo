@@ -1,11 +1,7 @@
 import pandas as pd
 
 # Crear una matriz con letras y numeros
-matriz = [
-    ['a', 'b', 'c'],
-    [1, 2, 3],
-    [4, 5, 6]
-]
+matriz = []
 
 # Convertir la matriz en un DataFrame de pandas
 df = pd.DataFrame(matriz)
@@ -20,11 +16,19 @@ df.columns = ['A', 'B', 'C']
 df.index = [1, 2, 3]
 
 # Establecer nombres combinaciones
-for columna in df.columns:
-    for fila in df.index:
-        nombre_celda = columna + str(fila)
-        df.loc[fila, columna] = nombre_celda
+# for columna in df.columns:
+#     for fila in df.index:
+#         nombre_celda = columna + str(fila)
+#         df.at[fila, columna] = nombre_celda
 
-print(df)
+
+print(df) #print del df completo
+print(df.at[1,'A']) #print del df con coordenadas con nombre
+print(df.iat[0,0]) #print del df con coordenadas tipo matriz
+
+print(matriz)
+print(matriz[0] [0])
+
+
 
 
