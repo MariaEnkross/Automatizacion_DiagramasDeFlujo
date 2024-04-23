@@ -1,16 +1,19 @@
 import openpyxl
+from datetime import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
-# Abre el archivo Excel
-wb = openpyxl.load_workbook('Agenda_Tareas.xlsx')
-sheet = wb.active  # O accede a una hoja específica si es necesario
+# Abre el archivo Excel lee solo los valores resultantes (ignorando las fórmulas)
+wb = openpyxl.load_workbook('excel.xlsx', data_only=True)
+sheet = wb['Tiempos']  # Se puede acceder a una hoja específica si es necesario
 
-# Leer datos de la hoja Excel y almacenarlos en una lista
+# Lee datos de la hoja Excel y los almacena en una lista
 data = []
 for row in sheet.iter_rows(values_only=True):
-    data.append(row)
+    filtered_row = [value.strftime('%d-%m-%Y') if isinstance(value, datetime) else value for value in row if value is not None]  # Formatear fechas y filtrar celdas en blanco
+    if filtered_row:  # Comprueba si filtered_row contiene algún valor después del filtrado
+        data.append(filtered_row)
 
 # Crear un documento PDF
 pdf_filename = "prueba3_datos_excel.pdf"
@@ -34,4 +37,3 @@ elements = [table]
 doc.build(elements)
 
 print(f"El PDF ha sido generado correctamente con el nombre: '{pdf_filename}'")
-
