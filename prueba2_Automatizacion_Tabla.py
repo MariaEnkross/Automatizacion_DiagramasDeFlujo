@@ -3,6 +3,7 @@ import string
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import landscape, A3, A4
 
 # Define the dimensions of the matrix
 rows = 5
@@ -43,7 +44,7 @@ print("El último valor importado es el:", matrix[rows-1][cols-1])
 
 # Crear un documento PDF
 pdf_filename = "prueba2_tablaPDF.pdf"
-doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+doc = SimpleDocTemplate(pdf_filename, pagesize=landscape(A4))
 
 # Convertir la matriz en una tabla para el PDF
 data = [['' for _ in range(cols)] for _ in range(rows)]
