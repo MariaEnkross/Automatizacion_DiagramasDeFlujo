@@ -24,7 +24,7 @@ for node in G.nodes():
     if x_position < len(G.nodes()) - 2:
         pos[node] = (x_position, 0)  # Posición para todos los nodos excepto los dos últimos
     else:
-        pos[node] = (x_position - 1, -1)  # Posición para los dos últimos nodos, movidos hacia la izquierda y hacia abajo
+        pos[node] = (x_position - 4, -3)  # Posición para los dos últimos nodos, movidos hacia la izquierda y hacia abajo
     x_position += 1
 
 # Dibujar bordes
