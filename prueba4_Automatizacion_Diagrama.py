@@ -34,6 +34,9 @@ for node, (x, y) in pos.items():
 # Eliminar ejes
 plt.axis('off')
 
+# Ajustar el tamaño del archivo PDF a A4 y orientación apaisada
+plt.gcf().set_size_inches(11.7, 8.3)
+
 # Guardar el gráfico como PDF
 plt.savefig('prueba4_diagrama.pdf', format='pdf')
 
