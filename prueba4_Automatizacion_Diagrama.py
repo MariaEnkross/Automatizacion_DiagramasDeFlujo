@@ -17,8 +17,8 @@ for i in range(len(datos.columns) - 1):
     G.add_edge(datos[i].iloc[0], datos[i + 1].iloc[0])  # Añadir conexión entre elementos adyacentes
 
 # Dibujar el gráfico
-plt.figure(figsize=(10, 6)) # tamaño
-pos = {}                    # posicion
+plt.figure(figsize=(297 / 25.4, 210 / 25.4))  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
+pos = {}                                      # posición
 x_position = 0
 for node in G.nodes():
     pos[node] = (x_position, 0)
@@ -33,9 +33,6 @@ for node, (x, y) in pos.items():
 
 # Eliminar ejes
 plt.axis('off')
-
-# Ajustar el tamaño del archivo PDF a A4 y orientación apaisada
-plt.gcf().set_size_inches(11.7, 8.3)
 
 # Guardar el gráfico como PDF
 plt.savefig('prueba4_diagrama.pdf', format='pdf')
