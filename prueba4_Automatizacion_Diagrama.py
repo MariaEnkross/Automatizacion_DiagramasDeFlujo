@@ -23,10 +23,10 @@ x_position = 0
 y_position = 0
 for node in G.nodes():
     if x_position == len(G.nodes()) - 2:  # Si es el penúltimo nodo
-        pos[node] = (x_position - 4, - 1)  # Colocar el penúltimo nodo en la posición (-4, -1)
+        pos[node] = (x_position - 4, -0.5)  # Colocar el penúltimo nodo en la posición (-4, -0.5)
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='skyblue', label=node)
     elif x_position == len(G.nodes()) - 1:  # Si es el último nodo
-        pos[node] = (x_position - 4, - 1)  # Colocar el último nodo en la posición (-3, -1)
+        pos[node] = (x_position - 4, -0.5)  # Colocar el último nodo en la posición (-3, -0.5)
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='lightgreen', label=node)
     else:
         if x_position == 1 or x_position == 3:  # Si es el primer nodo o el tercer nodo, dibujamos un rombo
