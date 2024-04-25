@@ -18,13 +18,21 @@ for i in range(len(datos.columns) - 1):
 
 # Dibujar el gráfico
 plt.figure(figsize=(297 / 25.4, 210 / 25.4))  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
-pos = {}                                      # posición
+pos = {}  # posición
 x_position = 0
+y_position = 0
 for node in G.nodes():
-    if x_position < len(G.nodes()) - 2:
-        pos[node] = (x_position, 0)  # Posición para todos los nodos excepto los dos últimos
+    if x_position == 1 or x_position == 3:  # Si es el primer nodo o el tercer nodo, dibujamos un rombo
+        pos[node] = (x_position, y_position)  # Posición para el primer nodo
+        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='skyblue', label=node)
     else:
-        pos[node] = (x_position - 4, -3)  # Posición para los dos últimos nodos, movidos hacia la izquierda y hacia abajo
+        if x_position < len(G.nodes()) - 2:  # Si es un nodo distinto al primero o al tercero, dibujamos un rectángulo
+            pos[node] = (x_position, y_position)  # Posición para todos los nodos excepto los dos últimos
+            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='lightgreen', label=node)
+        else:  # Si es uno de los dos últimos nodos, movidos hacia la izquierda y hacia abajo
+            pos[node] = (x_position - 4, - 3)
+            y_position = 0.5
+            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='lightgreen', label=node)
     x_position += 1
 
 # Dibujar bordes
@@ -32,7 +40,7 @@ nx.draw_networkx_edges(G, pos)
 
 # Dibujar etiquetas
 for node, (x, y) in pos.items():
-    plt.text(x, y, node, ha='center', va='center', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+    plt.text(x, y, node, ha='center', va='center')
 
 # Eliminar ejes
 plt.axis('off')
