@@ -2,9 +2,21 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx 
+import openpyxl
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import landscape, A4
 
-datos = pd.read_excel('prueba4_excel.xlsx')
+datos = openpyxl.load_workbook('prueba5_excel.xlsx', data_only=True)
+sheet = datos['diagrama1']
 
+print(datos)
+
+# Crea un PDF
+pdf_filename = "prueba5_datos_excel.pdf" 
+doc = SimpleDocTemplate(pdf_filename, pagesize=landscape(A4))
+
+""" 
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
 
@@ -64,4 +76,4 @@ plt.axis('off')
 # Guardar el gráfico como PDF
 plt.savefig('prueba4_diagrama.pdf', format='pdf')
 
-print("El diagrama de flujo se ha generado con éxito ")
+print("El diagrama de flujo se ha generado con éxito ") """
