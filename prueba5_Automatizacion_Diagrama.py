@@ -3,19 +3,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx 
 import openpyxl
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib.pagesizes import landscape, A4
 
-datos = openpyxl.load_workbook('prueba5_excel.xlsx', data_only=True)
-sheet = datos['diagrama1']
+# Open the Excel file
+file_path = "prueba5_excel.xlsx"
+workbook = openpyxl.load_workbook(file_path)
 
-print(datos)
+# Assuming you want to work with the first sheet, change this if needed
+sheet = workbook.active
 
-# Crea un PDF
-pdf_filename = "prueba5_datos_excel.pdf" 
-doc = SimpleDocTemplate(pdf_filename, pagesize=landscape(A4))
+# Initialize an empty matrix
+matrix = []
 
+# Iterate through rows and columns and store values in the matrix
+for row in sheet.iter_rows(values_only=True):
+    row_values = []    
+    for cell in row:
+        row_values.append(cell)
+        matrix.append(row_values)
+
+# Close the workbook when done
+workbook.close()
+
+print(matrix)
 """ 
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
