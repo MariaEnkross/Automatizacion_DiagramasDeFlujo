@@ -5,7 +5,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import landscape, A4
 
 # Abre el archivo Excel lee solo los valores resultantes (ignorando las fórmulas)
-wb = openpyxl.load_workbook('excel.xlsx', data_only=True)
+wb = openpyxl.load_workbook('prueba3_excel.xlsx', data_only=True)
 sheet = wb['Tiempos']  # Se puede acceder a una hoja específica si es necesario
 
 # Imprimir los nombres de todas las hojas en el archivo Excel

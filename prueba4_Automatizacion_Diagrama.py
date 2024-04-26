@@ -3,22 +3,22 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 # Cargar datos desde Excel
-datos = pd.read_excel('diagrama1.xlsx', header=None)  # No usar la primera fila como encabezados
+datos = pd.read_excel('prueba4_excel.xlsx')
 
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
 
 # Agregar nodos
 for col in datos.columns:
-    G.add_node(datos[col].iloc[0])  # Añadir elemento como nodo
+    G.add_node(col)  # Añadir elemento como nodo
 
 # Agregar conexiones entre elementos
 for i in range(len(datos.columns) - 1):
-    G.add_edge(datos[i].iloc[0], datos[i + 1].iloc[0])  # Añadir conexión entre elementos adyacentes
+    G.add_edge(datos.columns[i], datos.columns[i + 1])  # Añadir conexión entre elementos adyacentes
 
 # Verificar si hay más de 16 nodos
 if len(G.nodes()) > 16:
-    print("El software no está preparado.")
+    print("El software no está preparado. Hay más de 16 nodos.")
 else:
     # Preguntar al usuario por el tamaño de la hoja
     tamaño_hoja = input("¿Desea que el tamaño de la hoja sea A4 o A3?: ").upper()
@@ -26,7 +26,7 @@ else:
         print("Opción no válida. Se utilizará A4 por defecto.")
         tamaño_hoja = 'A4'
 
-    # Definir el tamaño del gráfico según la eleccion
+    # Definir el tamaño del gráfico según la selección del usuario
     if tamaño_hoja == 'A4':
         figsize = (297 / 25.4, 210 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
     else:
@@ -39,7 +39,7 @@ else:
     x_position = 0
     y_position = 0        
     x_position_max = 4
-    y_position_max = 2
+    y_position_max = - 2
 
     for node in G.nodes():
         pos[node] = (x_position, y_position)
@@ -48,12 +48,13 @@ else:
         else:
             nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='lightgreen')
 
-        if x_position < 4:
+        if x_position < x_position_max:
             x_position += 1
+
         else:
             x_position = 1
             y_position -= 1
-
+            
     # Dibujar bordes
     nx.draw_networkx_edges(G, pos)
 
@@ -69,5 +70,7 @@ else:
 
     # Mostrar el gráfico en pantalla
     plt.show()
+
+    print(datos)
 
     print("El diagrama de flujo se ha generado con éxito ")
