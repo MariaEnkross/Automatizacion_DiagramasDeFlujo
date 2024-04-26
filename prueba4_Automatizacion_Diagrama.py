@@ -16,41 +16,58 @@ for col in datos.columns:
 for i in range(len(datos.columns) - 1):
     G.add_edge(datos[i].iloc[0], datos[i + 1].iloc[0])  # Añadir conexión entre elementos adyacentes
 
-# Dibujar el gráfico
-plt.figure(figsize=(297 / 25.4, 210 / 25.4))  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
-pos = {}  # posición
-x_position = 0
-y_position = 0
-for node in G.nodes():
-    if x_position == len(G.nodes()) - 2:  # Si es el penúltimo nodo
-        pos[node] = (x_position - 4, -0.5)  # Colocar el penúltimo nodo en la posición (-4, -0.5)
-        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='skyblue', label=node)
-    elif x_position == len(G.nodes()) - 1:  # Si es el último nodo
-        pos[node] = (x_position - 4, -0.5)  # Colocar el último nodo en la posición (-3, -0.5)
-        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='lightgreen', label=node)
+# Verificar si hay más de 16 nodos
+if len(G.nodes()) > 16:
+    print("El software no está preparado.")
+else:
+    # Preguntar al usuario por el tamaño de la hoja
+    tamaño_hoja = input("¿Desea que el tamaño de la hoja sea A4 o A3?: ").upper()
+    if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
+        print("Opción no válida. Se utilizará A4 por defecto.")
+        tamaño_hoja = 'A4'
+
+    # Definir el tamaño del gráfico según la eleccion
+    if tamaño_hoja == 'A4':
+        figsize = (297 / 25.4, 210 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
     else:
-        if x_position == 1 or x_position == 3:  # Si es el primer nodo o el tercer nodo, dibujamos un rombo
-            pos[node] = (x_position, y_position)  # Posición para el primer nodo
-            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='skyblue', label=node)
-        else:  # Si es cualquier otro nodo, dibujamos un rectángulo
-            pos[node] = (x_position, y_position)
-            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='lightgreen', label=node)
-    x_position += 1
+        figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
 
-# Dibujar bordes
-nx.draw_networkx_edges(G, pos)
+    # Dibujar el gráfico con el tamaño adecuado
+    plt.figure(figsize=figsize)
 
-# Dibujar etiquetas
-for node, (x, y) in pos.items():
-    plt.text(x, y, node, ha='center', va='center')
+    pos = {}  # Inicializar el diccionario de posiciones
+    x_position = 0
+    y_position = 0        
+    x_position_max = 4
+    y_position_max = 2
 
-# Eliminar ejes
-plt.axis('off')
+    for node in G.nodes():
+        pos[node] = (x_position, y_position)
+        if x_position == 0 or x_position % 2 == 0:
+            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='skyblue')
+        else:
+            nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='lightgreen')
 
-# Guardar el gráfico como PDF
-plt.savefig('prueba4_diagrama.pdf', format='pdf')
+        if x_position < 4:
+            x_position += 1
+        else:
+            x_position = 1
+            y_position -= 1
 
-# Mostrar el gráfico en pantalla
-plt.show()
+    # Dibujar bordes
+    nx.draw_networkx_edges(G, pos)
 
-print("El diagrama de flujo se ha generado con éxito ")
+    # Dibujar etiquetas
+    for node, (x, y) in pos.items():
+        plt.text(x, y, node, ha='center', va='center')
+
+    # Eliminar ejes
+    plt.axis('off')
+
+    # Guardar el gráfico como PDF
+    plt.savefig('prueba4_diagrama.pdf', format='pdf')
+
+    # Mostrar el gráfico en pantalla
+    plt.show()
+
+    print("El diagrama de flujo se ha generado con éxito ")
