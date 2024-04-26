@@ -23,21 +23,20 @@ if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
     tamaño_hoja = 'A4'
 
 # Definir el tamaño del gráfico según la selección del usuario
+pos = {}  # Inicializar el diccionario de posiciones
+x_position = 0
+y_position = 0 
+
 if tamaño_hoja == 'A4':
-    figsize = (297 / 25.4, 210 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
-    x_position = 4
+    figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
+    x_position_max = 4
 else:
     tamaño_hoja == 'A3'
     figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
-    x_position = 8
+    x_position_max = 8
 
 # Dibujar el gráfico con el tamaño adecuado
-plt.figure(figsize=figsize)
-
-pos = {}  # Inicializar el diccionario de posiciones
-x_position = 0
-y_position = 0        
-x_position_max = 4
+plt.figure(figsize=figsize)       
 
 for node in G.nodes():
     pos[node] = (x_position, y_position)
@@ -66,6 +65,6 @@ plt.axis('off')
 plt.savefig('prueba4_diagrama.pdf', format='pdf')
 
 # Mostrar el gráfico en pantalla
-plt.show()
+# plt.show()
 
 print("El diagrama de flujo se ha generado con éxito ")
