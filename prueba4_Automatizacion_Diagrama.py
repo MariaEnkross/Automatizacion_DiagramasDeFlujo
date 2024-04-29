@@ -1,9 +1,11 @@
-# Cargar datos desde Excel
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx 
 
 datos = pd.read_excel('prueba4_excel.xlsx')
+
+# Reemplazar las celdas vacías con un string vacío
+datos = datos.fillna('')
 
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
@@ -31,7 +33,6 @@ if tamaño_hoja == 'A4':
     figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
     x_position_max = 4
 else:
-    tamaño_hoja == 'A3'
     figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
     x_position_max = 8
 
