@@ -3,6 +3,20 @@ import matplotlib.pyplot as plt
 import networkx as nx 
 import openpyxl
 
+# Preguntar al usuario por el tamaño de la hoja
+tamaño_hoja = input("¿Desea que el tamaño de la hoja sea A4 o A3?: ").upper()
+if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
+    print("Opción no válida. Se utilizará A4 por defecto.")
+    tamaño_hoja = 'A4'
+
+if tamaño_hoja == 'A4':
+    figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
+    x_position_max = 4
+else:
+    tamaño_hoja == 'A3'
+    figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
+    x_position_max = 8
+
 # Abre el archivo de Excel
 datos = "prueba5_excel.xlsx"
 workbook = openpyxl.load_workbook(datos)
@@ -12,7 +26,7 @@ sheet = workbook.active
 rows = []
 cols = []
 
-# Itera a través de las filas y guarda las filas no vacías en la lista
+# Itera a través de las filas y guarda las que no están vacías en la lista
 for row in sheet.iter_rows(values_only=True):
     if any(cell is not None for cell in row):
         rows.append(row)
@@ -20,9 +34,32 @@ for row in sheet.iter_rows(values_only=True):
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
 
+# Recorrer las filas
+for row in rows:
+    G.add_node(row)  # Agregar el nodo correspondiente a la fila
+
+   # Inicializar el índice
+    i = 0
+
+    # Recorrer los elementos de la fila
+    while rows[row][i] is not None:
+        G.add_node = rows[row][i]
+        i+=1
+
+"""
+for row in rows:
+    G + string[row] = nx.Graph()
+    i=0
+
+    while rows[row][i] != None:
+        G.add_node = rows[row][i]
+        i+=1
+    
+    G.string[row] = G
+
 # Agregar nodos
 for row in rows:
-    for cell in row:
+    while cell in row:
         if cell is not None:
             G.add_node(cell)  # Añadir elemento como nodo
 
@@ -69,9 +106,6 @@ for node in G.nodes():
         x_position = 1
         y_position -= 1
 
-
-for node in G.nodes():
-    pos[node] = (x_position, y_position)
     if y_position < -6:
         y_position = x_position - 1
 
@@ -96,3 +130,4 @@ plt.savefig('prueba4_diagrama.pdf', format='pdf')
 print("El diagrama de flujo se ha generado con éxito ")
 print()
 
+ """
