@@ -22,11 +22,6 @@ if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
     print("Opción no válida. Se utilizará A4 por defecto.")
     tamaño_hoja = 'A4'
 
-# Definir el tamaño del gráfico según la selección del usuario
-pos = {}  # Inicializar el diccionario de posiciones
-x_position = 0
-y_position = 0 
-
 if tamaño_hoja == 'A4':
     figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
     x_position_max = 4
@@ -37,6 +32,11 @@ else:
 
 # Dibujar el gráfico con el tamaño adecuado
 plt.figure(figsize=figsize)       
+
+# Definir el tamaño del gráfico según la selección del usuario
+pos = {}  # Inicializar el diccionario de posiciones
+x_position = 0
+y_position = 0 
 
 for node in G.nodes():
     pos[node] = (x_position, y_position)

@@ -8,6 +8,7 @@ tamaño_hoja = input("¿Desea que el tamaño de la hoja sea A4 o A3?: ").upper()
 if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
     print("Opción no válida. Se utilizará A4 por defecto.")
     tamaño_hoja = 'A4'
+    print()
 
 if tamaño_hoja == 'A4':
     figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
@@ -22,75 +23,44 @@ datos = "prueba5_excel.xlsx"
 workbook = openpyxl.load_workbook(datos)
 sheet = workbook.active
 
+# Crear un gráfico utilizando NetworkX
+G = nx.Graph()
+
 # Inicializa una lista vacía para contener las filas/columnas no vacías
 rows = []
 cols = []
 
-# Itera a través de las filas y guarda las que no están vacías en la lista
+
+""" 
+# Itera a través de todas las filas y guarda
 for row in sheet.iter_rows(values_only=True):
     if any(cell is not None for cell in row):
         rows.append(row)
 
-# Crear un gráfico utilizando NetworkX
-G = nx.Graph()
+# Itera a través de todas las columnas y guarda
+for col in sheet.iter_cols(values_only=True):
+    if any(cell is not None for cell in col):
+        cols.append(col)
 
-# Recorrer las filas
-for row in rows:
-    G.add_node(row)  # Agregar el nodo correspondiente a la fila
+# Iterar sobre las filas no vacías
+for row_data in rows:
+    # Agregar nodos al grafo G
+    for node in row_data:
+        if node is not None:
+            G.add_node(node)
 
-   # Inicializar el índice
-    i = 0
-
-    # Recorrer los elementos de la fila
-    while rows[row][i] is not None:
-        G.add_node = rows[row][i]
-        i+=1
-
-"""
-for row in rows:
-    G + string[row] = nx.Graph()
-    i=0
-
-    while rows[row][i] != None:
-        G.add_node = rows[row][i]
-        i+=1
-    
-    G.string[row] = G
-
-# Agregar nodos
-for row in rows:
-    while cell in row:
-        if cell is not None:
-            G.add_node(cell)  # Añadir elemento como nodo
-
-# Agregar conexiones entre elementos
-for i in range(len(rows) - 1):
-    for j in range(len(rows[i])):
-        # Verificar si las celdas no son None antes de agregar la conexión
-        if rows[i][j] is not None and rows[i + 1][j] is not None:
-            G.add_edge(rows[i][j], rows[i + 1][j])  # Añadir conexión entre elementos adyacentes
-  
-# Preguntar al usuario por el tamaño de la hoja
-tamaño_hoja = input("¿Desea que el tamaño de la hoja sea A4 o A3?: ").upper()
-if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
-    print("Opción no válida. Se utilizará A4 por defecto.")
-    print()
-    tamaño_hoja = 'A4'
-
-# Definir el tamaño del gráfico según la selección del usuario
-pos = {}  # Inicializar el diccionario de posiciones
-x_position = 0
-y_position = 0 
-
-if tamaño_hoja == 'A4':
-    figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
-    x_position_max = 4
-else:
-    figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
-    x_position_max = 8
+# Iterar sobre las columnas no vacías
+for col_data in cols:
+    # Agregar conexiones entre nodos al grafo G
+    for i in range(len(datos.columns) - 1):
+        G.add_edge(datos.columns[i], datos.columns[i + 1])
 
 # Dibujar el gráfico con el tamaño adecuado
-plt.figure(figsize=figsize)       
+plt.figure(figsize=figsize) 
+
+pos = {}  # Inicializar el diccionario de posiciones
+x_position = 0
+y_position = 0
 
 for node in G.nodes():
     pos[node] = (x_position, y_position)
@@ -125,7 +95,7 @@ for node, (x, y) in pos.items():
 plt.axis('off')
 
 # Guardar el gráfico como PDF
-plt.savefig('prueba4_diagrama.pdf', format='pdf')
+plt.savefig('prueba5_diagrama.pdf', format='pdf')
 
 print("El diagrama de flujo se ha generado con éxito ")
 print()
