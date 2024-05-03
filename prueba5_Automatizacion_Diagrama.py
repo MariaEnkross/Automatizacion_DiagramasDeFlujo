@@ -97,5 +97,5 @@ plt.axis('off')
 # Guardar el gráfico como PDF
 plt.savefig('prueba5_diagrama.pdf', format='pdf')
 
-print("El diagrama de flujo se ha generado con éxito ")
+# print("El diagrama de flujo se ha generado con éxito ")
 print() 
