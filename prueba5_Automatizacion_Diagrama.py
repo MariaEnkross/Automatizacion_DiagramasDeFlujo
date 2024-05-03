@@ -30,9 +30,7 @@ G = nx.Graph()
 rows = []
 cols = []
 
-
-""" 
-# Itera a través de todas las filas y guarda
+""" # Itera a través de todas las filas y guarda
 for row in sheet.iter_rows(values_only=True):
     if any(cell is not None for cell in row):
         rows.append(row)
@@ -47,20 +45,22 @@ for row_data in rows:
     # Agregar nodos al grafo G
     for node in row_data:
         if node is not None:
-            G.add_node(node)
+            G.add_node(node) 
 
 # Iterar sobre las columnas no vacías
 for col_data in cols:
     # Agregar conexiones entre nodos al grafo G
-    for i in range(len(datos.columns) - 1):
-        G.add_edge(datos.columns[i], datos.columns[i + 1])
-
+    for i in range(len(col_data)):
+        for j in range(i+1, len(col_data)):
+            if col_data[i] is not None and col_data[j] is not None:
+                G.add_edge(col_data[i], col_data[j]) 
+ """
 # Dibujar el gráfico con el tamaño adecuado
-plt.figure(figsize=figsize) 
+plt.figure(figsize=figsize)   
 
 pos = {}  # Inicializar el diccionario de posiciones
 x_position = 0
-y_position = 0
+y_position = 0 
 
 for node in G.nodes():
     pos[node] = (x_position, y_position)
@@ -98,6 +98,4 @@ plt.axis('off')
 plt.savefig('prueba5_diagrama.pdf', format='pdf')
 
 print("El diagrama de flujo se ha generado con éxito ")
-print()
-
- """
+print() 
