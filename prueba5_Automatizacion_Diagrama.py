@@ -20,41 +20,24 @@ else:
 
 # Abre el archivo de Excel
 datos = "prueba5_excel.xlsx"
-workbook = openpyxl.load_workbook(datos)
-sheet = workbook.active
+df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
-# Crear un gráfico utilizando NetworkX
-G = nx.Graph()
+# Iterar sobre las filas del DataFrame
+for idx, row in df.iterrows():
+    # Crear un nuevo grafo para cada fila
+    G = nx.Graph()
 
-# Inicializa una lista vacía para contener las filas/columnas no vacías
-rows = []
-cols = []
-
-""" # Itera a través de todas las filas y guarda
-for row in sheet.iter_rows(values_only=True):
-    if any(cell is not None for cell in row):
-        rows.append(row)
-
-# Itera a través de todas las columnas y guarda
-for col in sheet.iter_cols(values_only=True):
-    if any(cell is not None for cell in col):
-        cols.append(col)
-
-# Iterar sobre las filas no vacías
-for row_data in rows:
     # Agregar nodos al grafo G
-    for node in row_data:
-        if node is not None:
-            G.add_node(node) 
+    for cell in row:
+        G.add_node(cell)
 
-# Iterar sobre las columnas no vacías
-for col_data in cols:
-    # Agregar conexiones entre nodos al grafo G
-    for i in range(len(col_data)):
-        for j in range(i+1, len(col_data)):
-            if col_data[i] is not None and col_data[j] is not None:
-                G.add_edge(col_data[i], col_data[j]) 
- """
+    # Agregar conexiones entre nodos en la fila actual
+    for i in range(len(row) - 1):
+        G.add_edge(row[i], row[i+1])
+
+    # Calcular posiciones de los nodos utilizando el algoritmo spring
+    pos = nx.spring_layout(G)
+
 # Dibujar el gráfico con el tamaño adecuado
 plt.figure(figsize=figsize)   
 
@@ -97,5 +80,5 @@ plt.axis('off')
 # Guardar el gráfico como PDF
 plt.savefig('prueba5_diagrama.pdf', format='pdf')
 
-# print("El diagrama de flujo se ha generado con éxito ")
+print("El diagrama de flujo se ha generado con éxito ")
 print() 
