@@ -17,6 +17,7 @@ if tamaño_hoja != 'A4' and tamaño_hoja != 'A3':
 if tamaño_hoja == 'A4':
     figsize = (210 / 25.4, 297 / 25.4)  # Tamaño A4 en orientación paisaje en milímetros (ancho, alto)
     x_position_max = 4
+
 else:
     figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
     x_position_max = 8
@@ -32,6 +33,7 @@ pdf_merger = PdfMerger()
 for idx, row in df.iterrows():
     # Filtrar valores NaN
     row = row.dropna()
+    # print(f"Fila {idx+1}: {row}")
 
     # Crear un nuevo grafo para cada fila
     G = nx.Graph()
@@ -81,7 +83,7 @@ for idx, row in df.iterrows():
     # Eliminar ejes
     plt.axis('off')
 
-    # Convertir el gráfico a bytes en lugar de guardar en un archivo
+    # Convertir el gráfico a bytes en lugar de guardarlo en un archivo
     buf = BytesIO()
     plt.savefig(buf, format='pdf')
     buf.seek(0)
