@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
-from PyPDF2 import PdfMerger
+from PyPDF2 import PdfMerger, PdfFileReader
 
 # Preguntar al usuario por el tamaño de la hoja
 print()
@@ -28,6 +28,8 @@ df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 for idx, row in df.iterrows():
     # Filtrar valores NaN
     row = row.dropna()
+    
+    # print(f"Fila {idx+1}: {row}")     # Imprimir por consola filas excel para comprobar que se leen correctamente
 
     # Crear un nuevo grafo para cada fila
     G = nx.Graph()
@@ -79,6 +81,9 @@ for idx, row in df.iterrows():
 
     # Guardar el gráfico como PDF
     plt.savefig(f'prueba6_diagrama_{idx+1}.pdf', format='pdf')
+
+    # Cerrar la figura para liberar memoria
+    plt.close()
 
     print(f"El diagrama de flujo para la fila {idx+1} se ha generado con éxito ")
     print()
