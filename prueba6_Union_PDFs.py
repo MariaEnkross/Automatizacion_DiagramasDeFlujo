@@ -1,8 +1,8 @@
-from PyPDF2 import PdfMerger
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
-
+from PyPDF2 import PdfMerger
+from io import BytesIO
 
 # Preguntar al usuario por el tamaño de la hoja
 print()
@@ -25,12 +25,13 @@ else:
 datos = "prueba5_excel.xlsx"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
+# Crear un objeto para combinar PDFs
+pdf_merger = PdfMerger()
+
 # Iterar sobre las filas del DataFrame
 for idx, row in df.iterrows():
     # Filtrar valores NaN
     row = row.dropna()
-
-    # print(f"Fila {idx+1}: {row}")     # Imprimir por consola filas excel para comprobar que se leen correctamente
 
     # Crear un nuevo grafo para cada fila
     G = nx.Graph()
@@ -80,29 +81,21 @@ for idx, row in df.iterrows():
     # Eliminar ejes
     plt.axis('off')
 
-    # Guardar el gráfico como PDF
-    plt.savefig(f'prueba6_diagrama_{idx+1}.pdf', format='pdf')
+    # Convertir el gráfico a bytes en lugar de guardar en un archivo
+    buf = BytesIO()
+    plt.savefig(buf, format='pdf')
+    buf.seek(0)
 
-    # Cerrar la figura para liberar memoria
-    plt.close()
+    # Agregar el gráfico al objeto combinador de PDFs
+    pdf_merger.append(buf)
 
     print(f"El diagrama de flujo para la fila {idx+1} se ha generado con éxito ")
     print()
 
-# Crear un objeto para combinar PDFs
-pdf_merger = PdfMerger()
-
-# Nombre del archivo PDF combinado
-pdf_combined_file = 'prueba6_diagrama_PDF_combinado.pdf'
-
-# Agregar cada archivo PDF generado al objeto combinador de PDFs
-for idx in range(len(df)):
-    pdf_file = f'prueba6_diagrama_{idx+1}.pdf'
-    pdf_merger.append(pdf_file)
-
 # Guardar el archivo PDF combinado
+pdf_combined_file = 'prueba6_diagrama_PDF_combinado.pdf'
 with open(pdf_combined_file, 'wb') as output_pdf:
     pdf_merger.write(output_pdf)
 
-print(f"Los diagramas de flujo se han combinado en el archivo: {pdf_combined_file}")
+print(f"El archivo PDF combinado se ha guardado correctamente en: {pdf_combined_file}")
 print()
