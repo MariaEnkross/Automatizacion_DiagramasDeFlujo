@@ -1,7 +1,8 @@
-import pandas as pd
+from PyPDF2 import PdfMerger
 import matplotlib.pyplot as plt
 import networkx as nx
-from PyPDF2 import PdfMerger, PdfFileReader
+import pandas as pd
+
 
 # Preguntar al usuario por el tamaño de la hoja
 print()
@@ -28,7 +29,7 @@ df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 for idx, row in df.iterrows():
     # Filtrar valores NaN
     row = row.dropna()
-    
+
     # print(f"Fila {idx+1}: {row}")     # Imprimir por consola filas excel para comprobar que se leen correctamente
 
     # Crear un nuevo grafo para cada fila
