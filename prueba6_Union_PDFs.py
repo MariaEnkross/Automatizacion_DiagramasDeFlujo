@@ -19,7 +19,7 @@ if tamaño_hoja == 'A4':
     x_position_max = 4
 
 else:
-    figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en orientación paisaje en milímetros (ancho, alto)
+    figsize = (420 / 25.4, 297 / 25.4)  # Tamaño A3 en milímetros (ancho, alto)
     x_position_max = 8
 
 # Abre el archivo de Excel
@@ -46,7 +46,7 @@ for idx, row in df.iterrows():
     for i in range(len(row) - 1):
         G.add_edge(row[i], row[i+1])
 
-    # Calcular posiciones de los nodos utilizando el algoritmo spring
+    # Calcular posiciones de los nodos utilizando el algoritmo spring de NetworkX
     pos = nx.spring_layout(G)
 
     # Dibujar el gráfico con el tamaño adecuado
@@ -61,11 +61,13 @@ for idx, row in df.iterrows():
 
         if x_position == 0 or x_position % 2 == 0:
             nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='s', node_color='skyblue')
+        
         else:
             nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape='d', node_color='lightgreen')
 
         if x_position < x_position_max:
             x_position += 1
+        
         else:
             x_position = 1
             y_position -= 1
