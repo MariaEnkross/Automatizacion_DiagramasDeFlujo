@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
+import time
+import os
 from PyPDF2 import PdfMerger
 from io import BytesIO
 
@@ -23,7 +25,7 @@ else:
     x_position_max = 8
 
 # Abre el archivo de Excel
-datos = "prueba5_excel.xlsx"
+datos = "prueba7_excel.xlsm"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
 # Crear un objeto para combinar PDFs
@@ -97,7 +99,7 @@ for idx, row in df.iterrows():
     print()
 
 # Guardar el archivo PDF combinado
-pdf_combined_file = 'prueba6_diagrama_PDF_combinado.pdf'
+pdf_combined_file = 'prueba7_diagrama_PDF_combinado.pdf'
 with open(pdf_combined_file, 'wb') as output_pdf:
     pdf_merger.write(output_pdf)
 
