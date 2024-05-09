@@ -23,7 +23,7 @@ else:
     x_position_max = 8
 
 # Abre el archivo de Excel
-datos = "prueba8_excel.xlsm"
+datos = "prueba8_excel_copia.xlsm"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
 # Crear un objeto para combinar PDFs
@@ -104,5 +104,3 @@ with open(pdf_combined_file, 'wb') as output_pdf:
 print(f"El archivo PDF combinado se ha guardado correctamente en: {pdf_combined_file}")
 print()
 
-# Wait for user input to keep the terminal window open
-input("Pulsa Enter para salir...")

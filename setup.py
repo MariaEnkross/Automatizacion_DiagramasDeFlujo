@@ -1,8 +1,8 @@
 from cx_Freeze import setup, Executable
 
 setup(
-    name="Desarrollo Unifilares",
+    name="prueba8_Ejecutable.exe",
     version="1.0",
-    description="Executable Python",
-    executables=[Executable("prueba7_Ejecutable.py")]
+    description="Breve descripción de tu programa",
+    executables=[Executable("prueba8_Ejecutable.py")]
 )
