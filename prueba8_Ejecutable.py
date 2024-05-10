@@ -3,6 +3,7 @@ import networkx as nx
 import pandas as pd
 from PyPDF2 import PdfMerger
 from io import BytesIO
+import xlwings as xw
 
 # Preguntar al usuario por el tamaño de la hoja
 print()
@@ -23,7 +24,7 @@ else:
     x_position_max = 8
 
 # Abre el archivo de Excel
-datos = "prueba8_excel_copia.xlsm"
+datos = "prueba8_excel.xlsm"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
 # Crear un objeto para combinar PDFs

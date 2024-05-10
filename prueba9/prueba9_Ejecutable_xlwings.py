@@ -1,4 +1,7 @@
+import matplotlib
+matplotlib.use('pdf')  # Configura el backend de Matplotlib en PDF
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import networkx as nx
 import xlwings as xw
 from PyPDF2 import PdfMerger
