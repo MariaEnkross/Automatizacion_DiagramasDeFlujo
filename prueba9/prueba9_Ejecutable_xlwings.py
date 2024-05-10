@@ -29,7 +29,7 @@ pdf_merger = PdfMerger()
 
 # Abrir el archivo de Excel con xlwings
 app = xw.App(visible=False)
-wb = app.books.open('prueba9_excel.xlsm')
+wb = app.books.open('prueba9.xlsm')
 sheet = wb.sheets[0]
 
 # Leer datos desde Excel
@@ -100,7 +100,7 @@ for idx, row in enumerate(df):
     print()
 
 # Guardar el archivo PDF combinado
-pdf_combined_file = 'prueba9_diagrama_PDF_combinado.pdf'
+pdf_combined_file = 'prueba9.pdf'
 with open(pdf_combined_file, 'wb') as output_pdf:
     pdf_merger.write(output_pdf)
 
