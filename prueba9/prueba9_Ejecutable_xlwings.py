@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('pdf')  # Configura el backend de Matplotlib en PDF
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+import matplotlib.backends.backend_pdf
 import networkx as nx
 import xlwings as xw
 from PyPDF2 import PdfMerger
@@ -110,3 +110,4 @@ print()
 # Cerrar el libro de Excel y la aplicación de xlwings
 wb.close()
 app.quit()
+
