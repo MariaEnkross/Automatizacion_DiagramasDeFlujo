@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx 
 
-datos = pd.read_excel('prueba4_excel.xlsx')
+datos = pd.read_excel('prueba4.xlsx')
 
 # Crear un gráfico utilizando NetworkX
 G = nx.Graph()
@@ -62,6 +62,6 @@ for node, (x, y) in pos.items():
 plt.axis('off')
 
 # Guardar el gráfico como PDF
-plt.savefig('prueba4_diagrama.pdf', format='pdf')
+plt.savefig('prueba4.pdf', format='pdf')
 
 print("El diagrama de flujo se ha generado con éxito ")

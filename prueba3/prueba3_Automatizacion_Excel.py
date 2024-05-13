@@ -5,7 +5,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import landscape, A4
 
 # Abre el archivo Excel lee solo los valores resultantes (ignorando las fórmulas)
-wb = openpyxl.load_workbook('prueba3_excel.xlsx', data_only=True)
+wb = openpyxl.load_workbook('prueba3.xlsx', data_only=True)
 sheet = wb['Tiempos']  # Se puede acceder a una hoja específica si es necesario
 
 # Imprimir los nombres de todas las hojas en el archivo Excel
@@ -22,7 +22,7 @@ for row in sheet.iter_rows(values_only=True):
         data.append(filtered_row)
 
 # Crea un PDF
-pdf_filename = "prueba3_datos_excel.pdf" 
+pdf_filename = "prueba3.pdf" 
 doc = SimpleDocTemplate(pdf_filename, pagesize=landscape(A4))
 
 # Crear una tabla con los datos

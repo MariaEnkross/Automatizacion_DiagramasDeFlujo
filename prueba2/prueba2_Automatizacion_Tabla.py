@@ -43,7 +43,7 @@ print("El primer valor importado es el:", matrix[0][0])
 print("El último valor importado es el:", matrix[rows-1][cols-1])
 
 # Crear un documento PDF
-pdf_filename = "prueba2_tablaPDF.pdf"
+pdf_filename = "prueba2.pdf"
 doc = SimpleDocTemplate(pdf_filename, pagesize=A4)
 
 # Convertir la matriz en una tabla para el PDF

@@ -23,7 +23,7 @@ else:
     x_position_max = 8
 
 # Abre el archivo de Excel
-datos = "prueba5_excel.xlsx"
+datos = "prueba6.xlsx"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
 # Crear un objeto para combinar PDFs
@@ -97,7 +97,7 @@ for idx, row in df.iterrows():
     print()
 
 # Guardar el archivo PDF combinado
-pdf_combined_file = 'prueba6_diagrama_PDF_combinado.pdf'
+pdf_combined_file = 'prueba6.pdf'
 with open(pdf_combined_file, 'wb') as output_pdf:
     pdf_merger.write(output_pdf)
 

@@ -20,7 +20,7 @@ else:
     x_position_max = 8
 
 # Abre el archivo de Excel
-datos = "prueba5_excel.xlsx"
+datos = "prueba5.xlsx"
 df = pd.read_excel(datos, header=None)  # Leer datos de Excel
 
 # Iterar sobre las filas del DataFrame
@@ -79,7 +79,7 @@ for idx, row in df.iterrows():
     plt.axis('off')
 
     # Guardar el gráfico como PDF
-    plt.savefig(f'prueba5_diagrama_{idx+1}.pdf', format='pdf')
+    plt.savefig(f'prueba5.{idx+1}.pdf', format='pdf')
 
     print(f"El diagrama de flujo para la fila {idx+1} se ha generado con éxito ")
     print()
