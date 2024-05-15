@@ -85,6 +85,7 @@ for idx, row in enumerate(df):
 
     # Verificar si la fila tiene suficientes valores para dibujar el gráfico
     if len(row) > 1:  # Por lo menos dos nodos para crear una conexión
+        
         # Crear un nuevo grafo para cada fila
         G = nx.Graph()
 

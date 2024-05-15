@@ -4,9 +4,14 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 import networkx as nx
 import xlwings as xw
+import win32gui, win32con
 from PyPDF2 import PdfMerger
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
+
+# Ocultar la CMD de Windows al ejecutar el .exe
+hide = win32gui.GetForegroundWindow()
+win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
@@ -14,15 +19,15 @@ class RedirectStdout:
         self.text_widget = text_widget
 
     def write(self, string):
-        self.text_widget.insert(tk.END, string)
-        self.text_widget.see(tk.END)
+        self.text_widget.insert(ctk.END, string)
+        self.text_widget.see(ctk.END)
 
     def flush(self):
         pass
 
 # Función que muestra una ventana emergente con un ícono de advertencia
 def show_warning(message):
-    messagebox.showwarning("Advertencia", message)
+    ctk.messagebox.showwarning("Advertencia", message)
 
 # Función para seleccionar un archivo Excel
 def select_file():
@@ -33,7 +38,7 @@ def select_file():
         root.destroy()
         
     else:
-        file_entry.delete(0, tk.END)
+        file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
 
 # Función para verificar la extensión del archivo Excel
@@ -69,7 +74,7 @@ def process_file():
     df = sheet.used_range.value
 
     # Iterar sobre las filas del DataFrame
-    for idx, row in enumerate(df):
+    for idx, row in enumerate(df): # La función "enumerate" se utiliza aquí para obtener tanto el índice como el contenido de cada fila en el DataFrame.
 
         # Filtrar valores NaN
         row = [cell for cell in row if cell is not None]
@@ -94,8 +99,11 @@ def process_file():
             buf.seek(0)
             pdf_merger.append(buf)
 
-            print(f"El diagrama de flujo para la fila {idx + 1} se ha generado con éxito\n")
-
+            print(f"El diagrama de unifilares para la fila {idx + 1} se ha generado con éxito\n")
+        """ 
+        else:
+            print(f"No ha sido posible hacer un diagrama para la fila {idx + 1} porque no hay suficientes datos.\n") """
+ 
     # Guardar el archivo PDF combinado
     pdf_combined_file = save_file()
 
@@ -103,8 +111,9 @@ def process_file():
         with open(pdf_combined_file, 'wb') as output_pdf:
             pdf_merger.write(output_pdf)
 
+        # Mensaje de Información al finalizar el proceso
         print(f"El archivo PDF se ha guardado correctamente en: {pdf_combined_file}")
-        messagebox.showinfo("Éxito", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
+        messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
     else:
         print("El usuario canceló el guardado.\n")
@@ -168,7 +177,7 @@ def draw_graph(G, pos, ax):
     node_colors = ['skyblue' if i % 2 == 0 else 'lightgreen' for i in range(len(G.nodes))]
     node_shapes = ['s' if i % 2 == 0 else 'd' for i in range(len(G.nodes))]
 
-    for i, (node, (x, y)) in enumerate(pos.items()):
+    for i, (node, (x, y)) in enumerate(pos.items()): # Aquí, "pos.items()" devuelve una vista de los elementos (clave, valor) de "pos".
 
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
         ax.text(x, y, node, ha='center', va='center')
@@ -176,35 +185,37 @@ def draw_graph(G, pos, ax):
     nx.draw_networkx_edges(G, pos)
     ax.axis('off')
 
-# Configuración de la ventana principal
-root = tk.Tk()
+###### Configuración de la apariencia de la ventana principal con customtkinter #####
+
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
+
+root = ctk.CTk()
 root.title("Generador de Diagramas Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
 # Botón 'Examinar'
-tk.Label(root, text="Seleccionar archivo de Excel:").grid(row=0, column=0, padx=10, pady=10)
-file_entry = tk.Entry(root, width=50)
+ctk.CTkLabel(root, text="Seleccionar archivo de Excel:").grid(row=0, column=0, padx=10, pady=10)
+file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
-tk.Button(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
+ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
 # Botón 'Tamaño hoja'
-tk.Label(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
-size_var = tk.StringVar(value="A4")
-size_combobox = ttk.Combobox(root, textvariable=size_var, values=["A4", "A3"], state="readonly")
+ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
+size_var = ctk.StringVar(value="A4")
+size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
 size_combobox.grid(row=1, column=1, padx=10, pady=10)
 
-text_widget = tk.Text(root, wrap='word', height=15, width=80)
+text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
 text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
 sys.stdout = RedirectStdout(text_widget)
 
 # Botón 'Generar PDF'
-button_frame = tk.Frame(root)
-button_frame.grid(row=3, column=0, columnspan=3)
-tk.Button(button_frame, text="Generar PDF", command=process_file).pack(pady=10)
+ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, pady=10)
 
 # Botón 'Salir'
-tk.Button(root, text="Salir", command=root.quit).grid(row=3, column=2, pady=10)
+ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
 
 # Mantener la ventana abierta y a la espera de eventos (clics de ratón, pulsaciones de teclas, etc.)
 root.mainloop()
