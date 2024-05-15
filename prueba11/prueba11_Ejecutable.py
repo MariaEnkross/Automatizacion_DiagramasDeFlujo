@@ -67,24 +67,38 @@ def process_file():
     tamaño_hoja = size_var.get()
     figsize, x_position_max = get_figsize_and_max_pos(tamaño_hoja)
 
+    # Crear un objeto para combinar PDFs
     pdf_merger = PdfMerger()
 
+    # Abrir el archivo de Excel con xlwings
     app = xw.App(visible=False)
-    wb = app.books.open(file_path)
+    wb = app.books.open(file_path) # Abrir el archivo seleccionado por el usuario
     sheet = wb.sheets[0]
 
+    # Leer datos desde Excel
     df = sheet.used_range.value
 
+    # Iterar sobre las filas del DataFrame
     for idx, row in enumerate(df):
 
+        # Filtrar valores NaN
         row = [cell for cell in row if cell is not None]
         
-        if len(row) > 1:
+        # Verificar si la fila tiene suficientes valores para dibujar el gráfico
+        if len(row) > 1: # Por lo menos dos nodos para crear una conexión
+
+             # Crear un nuevo grafo para cada fila
             G = create_graph_from_row(row)
+
+            # Dibujar el gráfico con el tamaño adecuado
             fig, ax = plt.subplots(figsize=figsize)
+            
+            # Calcular posiciones de los nodos utilizando el algoritmo spring de NetworkX
             pos = generate_positions(G, x_position_max)
 
             draw_graph(G, pos, ax)
+
+            # Guardar la figura en un objeto BytesIO
             buf = BytesIO()
             plt.savefig(buf, format='pdf')
             buf.seek(0)
@@ -92,6 +106,7 @@ def process_file():
 
             print(f"El diagrama de flujo para la fila {idx + 1} se ha generado con éxito\n")
 
+    # Guardar el archivo PDF combinado
     pdf_combined_file = save_file()
 
     if pdf_combined_file:
@@ -104,6 +119,7 @@ def process_file():
     else:
         print("El usuario canceló el guardado.\n")
 
+    # Cerrar el libro de Excel y la aplicación de xlwings
     wb.close()
     app.quit()
 
@@ -135,9 +151,17 @@ def generate_positions(G, x_position_max):
 
     for node in G.nodes():
 
-        pos[node] = (x_position, y_position)
-        x_position += 1 if x_position < x_position_max else 1 - x_position_max
-        y_position -= 1 if x_position == 1 else 0
+        pos[node] = (x_position, y_position) # Inicializar el diccionario de posiciones
+
+        if x_position < x_position_max:
+            x_position += 1
+            
+        else:
+            x_position = 1
+            y_position -= 1
+
+        if y_position < -6:
+            y_position = x_position - 1
 
     return pos
 
