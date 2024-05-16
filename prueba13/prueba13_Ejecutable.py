@@ -195,14 +195,6 @@ root = ctk.CTk() # Crear la ventana principal
 root.title("Generador de Diagramas Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
-# Cargar la imagen del icono usando PIL
-icon_image = Image.open("images/isotipo_1.ico")
-icon_image = icon_image.resize((32, 32), Image.ANTIALIAS)  # Redimensionar a un tamaño adecuado para un icono
-icon_photo = ImageTk.PhotoImage(icon_image)
-
-# Establecer el icono de la ventana
-root.iconphoto(True, icon_photo)
-
 # Botón 'Examinar'
 ctk.CTkLabel(root, text="Seleccionar archivo de Excel:").grid(row=0, column=0, padx=10, pady=10)
 file_entry = ctk.CTkEntry(root, width=300)
