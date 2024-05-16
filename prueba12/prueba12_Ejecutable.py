@@ -190,7 +190,7 @@ def draw_graph(G, pos, ax):
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
-root = ctk.CTk()
+root = ctk.CTk() # Crear la ventana principal
 root.title("Generador de Diagramas Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
