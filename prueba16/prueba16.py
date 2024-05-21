@@ -90,31 +90,6 @@ def process_file():
     # Iterar sobre las filas del DataFrame
     for idx, row in enumerate(df):
 
-        # Combinar las primeras 5 celdas en un solo nodo si hay suficientes celdas
-        if len(row) >= 5:
-            combined_node = '\n'.join([str(cell) for cell in row[:5] if cell is not None])  # Combinar celdas Excel con saltos de línea
-            row = [combined_node] + row[5:]
-
-        # Combinar las últimas 5 celdas en un solo nodo si hay suficientes celdas
-        if len(row) >= 6:
-            combined_last_node = '\n'.join([str(cell) for cell in row[-5:] if cell is not None])  # Combinar celdas Excel con saltos de línea
-            row = row[:-5] + [combined_last_node]
-
-        # Verificar si hay más de 4 celdas consecutivas vacías en la fila
-        empty_cell_count = 0
-        for cell in row:
-            if cell is None:
-                empty_cell_count += 1
-                if empty_cell_count > 4:
-                    print(f"El programa se detendrá aquí. Se han encontrado más de 4 celdas vacías consecutivas en la fila {idx + 1}.")
-
-                    wb.close()
-                    app.quit()
-
-                    return  # Detener el procesamiento y salir de la función
-            else:
-                empty_cell_count = 0
-
         # Verificar si la fila tiene suficientes valores para dibujar el gráfico
         if len(row) > 1:  # Por lo menos dos nodos para crear una conexión
 
