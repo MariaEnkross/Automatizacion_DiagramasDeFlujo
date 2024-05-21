@@ -1,6 +1,6 @@
 import sys
 from io import BytesIO
-
+import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
 import xlwings as xw
@@ -8,11 +8,13 @@ import win32gui, win32con
 from PyPDF2 import PdfMerger
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
+from langdetect import detect
 from PIL import Image, ImageTk
+import os
 
 # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)
+win32gui.ShowWindow(hide, win32con.SW_HIDE)  
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
@@ -56,9 +58,44 @@ def save_file():
 
     return pdf_combined_file
 
+# Función para filtrar el archivo Excel
+def filter_file():
+    file_path = file_entry.get()
+    if not file_path:
+        show_warning("No se ha seleccionado ningún archivo.")
+        return
+
+    app = xw.App(visible=False)
+    wb = app.books.open(file_path)
+    sheet = wb.sheets[0]
+    data = sheet.used_range.value
+    df = pd.DataFrame(data[1:], columns=data[0])
+
+    # Filtrar filas donde la mayoría del texto esté en español
+    def is_spanish(text):
+        try:
+            return detect(text) == 'es'
+        except:
+            return False
+
+    df_filtered = df[df.apply(lambda row: any(is_spanish(str(cell)) for cell in row), axis=1)]
+
+    # Guardar el archivo filtrado
+    filtered_file_path = os.path.join(os.path.dirname(file_path), 'filtered_' + os.path.basename(file_path))
+    df_filtered.to_excel(filtered_file_path, index=False)
+    wb.close()
+    app.quit()
+
+    filtered_file_entry.delete(0, ctk.END)
+    filtered_file_entry.insert(0, filtered_file_path)
+    messagebox.showinfo("Información", f"El archivo ha sido filtrado y guardado como: {filtered_file_path}")
+
 # Función para procesar el archivo seleccionado
 def process_file():
-    file_path = file_entry.get()
+    filtered_file_path = filtered_file_entry.get()
+    if not filtered_file_path:
+        show_warning("No se ha seleccionado ningún archivo filtrado.")
+        return
 
     tamaño_hoja = size_var.get()
     figsize, x_position_max = get_figsize_and_max_pos(tamaño_hoja)
@@ -68,22 +105,34 @@ def process_file():
 
     # Abrir el archivo de Excel con xlwings
     app = xw.App(visible=False)
-    wb = app.books.open(file_path) # Abrir el archivo seleccionado por el usuario
+    wb = app.books.open(filtered_file_path)
     sheet = wb.sheets[0]
 
     # Leer datos desde Excel
     df = sheet.used_range.value
 
+    if not df:
+        print("No se pudieron leer los datos del archivo Excel.")
+        return
+
+    # Convertir los datos a DataFrame
+    df = pd.DataFrame(df[1:], columns=df[0])
+
     # Iterar sobre las filas del DataFrame
-    for idx, row in enumerate(df): # La función "enumerate" se utiliza aquí para obtener tanto el índice como el contenido de cada fila en el DataFrame.
+    for idx, row in enumerate(df.itertuples(index=False), start=1):
+        row = list(row)
 
         # Filtrar valores NaN
-        row = [cell for cell in row if cell is not None]
+        row = [cell for cell in row if pd.notna(cell)]
         
         # Verificar si la fila tiene suficientes valores para dibujar el gráfico
-        if len(row) > 1: # Por lo menos dos nodos para crear una conexión
+        if len(row) > 1:
+            print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
 
-             # Crear un nuevo grafo para cada fila
+        else:
+            print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n") 
+
+            # Crear un nuevo grafo para cada fila
             G = create_graph_from_row(row)
 
             # Dibujar el gráfico con el tamaño adecuado
@@ -100,11 +149,9 @@ def process_file():
             buf.seek(0)
             pdf_merger.append(buf)
 
-            print(f"El diagrama de unifilares para la fila {idx + 1} se ha generado con éxito\n")
-        """ 
-        else:
-            print(f"No ha sido posible hacer un diagrama para la fila {idx + 1} porque no hay suficientes datos.\n") """
- 
+            print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
+            plt.close(fig)
+        
     # Guardar el archivo PDF combinado
     pdf_combined_file = save_file()
 
@@ -122,6 +169,10 @@ def process_file():
     # Cerrar el libro de Excel y la aplicación de xlwings
     wb.close()
     app.quit()
+
+    # Eliminar el archivo filtrado
+    os.remove(filtered_file_path)
+    filtered_file_entry.delete(0, ctk.END)
 
 # Función para obtener el tamaño de la figura y la posición máxima en X
 def get_figsize_and_max_pos(tamaño_hoja):
@@ -201,22 +252,30 @@ file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
 ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
+# Campo para mostrar el archivo filtrado
+ctk.CTkLabel(root, text="Archivo filtrado:").grid(row=1, column=0, padx=10, pady=10)
+filtered_file_entry = ctk.CTkEntry(root, width=300)
+filtered_file_entry.grid(row=1, column=1, padx=10, pady=10)
+
+# Botón 'Filtrar Datos'
+ctk.CTkButton(root, text="Filtrar Datos", command=filter_file).grid(row=1, column=2, padx=10, pady=10)
+
 # Botón 'Tamaño hoja'
-ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
+ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=2, column=0, padx=10, pady=10)
 size_var = ctk.StringVar(value="A4")
 size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
-size_combobox.grid(row=1, column=1, padx=10, pady=10)
+size_combobox.grid(row=2, column=1, padx=10, pady=10)
 
 text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
-text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+text_widget.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
 
 sys.stdout = RedirectStdout(text_widget)
 
 # Botón 'Generar PDF'
-ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, pady=10)
+ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=4, column=0, columnspan=3, pady=10)
 
 # Botón 'Salir'
-ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
+ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=5, column=0, columnspan=3, pady=10)
 
 # Mantener la ventana abierta y a la espera de eventos (clics de ratón, pulsaciones de teclas, etc.)
 root.mainloop()

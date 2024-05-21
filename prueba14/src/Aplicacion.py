@@ -10,9 +10,9 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 
-# Ocultar la CMD de Windows al ejecutar el .exe
+""" # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)
+win32gui.ShowWindow(hide, win32con.SW_HIDE) """
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
@@ -101,9 +101,9 @@ def process_file():
             pdf_merger.append(buf)
 
             print(f"El diagrama de unifilares para la fila {idx + 1} se ha generado con éxito\n")
-        """ 
+        
         else:
-            print(f"No ha sido posible hacer un diagrama para la fila {idx + 1} porque no hay suficientes datos.\n") """
+            print(f"No ha sido posible hacer un diagrama para la fila {idx + 1} porque no hay suficientes datos.\n") 
  
     # Guardar el archivo PDF combinado
     pdf_combined_file = save_file()
