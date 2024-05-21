@@ -1,5 +1,6 @@
 import sys
 from io import BytesIO
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -14,7 +15,7 @@ import os
 
 # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)  
+win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
@@ -49,14 +50,22 @@ def is_valid_extension(file_path, valid_extensions=('.xls', '.xlsx')):
     return file_path.endswith(valid_extensions)
 
 # Función para guardar el archivo PDF combinado
-def save_file():
+def save_file(pdf_merger):
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
     
     if not pdf_combined_file:
         show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
         root.destroy()
+        return None
 
-    return pdf_combined_file
+    try:
+        with open(pdf_combined_file, 'wb') as output_pdf:
+            pdf_merger.write(output_pdf)
+        return pdf_combined_file
+
+    except Exception as e:
+        show_warning(f"Error al guardar el archivo PDF: {str(e)}")
+        return None
 
 # Función para filtrar el archivo Excel
 def filter_file():
@@ -112,7 +121,7 @@ def process_file():
     df = sheet.used_range.value
 
     if not df:
-        print("No se pudieron leer los datos del archivo Excel.")
+        show_warning("No se pudieron leer los datos del archivo Excel.")
         return
 
     # Convertir los datos a DataFrame
@@ -127,11 +136,6 @@ def process_file():
         
         # Verificar si la fila tiene suficientes valores para dibujar el gráfico
         if len(row) > 1:
-            print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
-
-        else:
-            print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n") 
-
             # Crear un nuevo grafo para cada fila
             G = create_graph_from_row(row)
 
@@ -151,27 +155,22 @@ def process_file():
 
             print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
             plt.close(fig)
-        
+
+        else:
+            print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
+
     # Guardar el archivo PDF combinado
-    pdf_combined_file = save_file()
+    pdf_combined_file = save_file(pdf_merger)
 
     if pdf_combined_file:
-        with open(pdf_combined_file, 'wb') as output_pdf:
-            pdf_merger.write(output_pdf)
-
-        # Mensaje de Información al finalizar el proceso
-        print(f"El archivo PDF se ha guardado correctamente en: {pdf_combined_file}")
         messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
-    else:
-        print("El usuario canceló el guardado.\n")
+        # Cerrar el libro de Excel y la aplicación de xlwings
+        wb.close()
+        app.quit()
 
-    # Cerrar el libro de Excel y la aplicación de xlwings
-    wb.close()
-    app.quit()
-
-    # Eliminar el archivo filtrado
-    os.remove(filtered_file_path)
+        # Eliminar el archivo filtrado
+        os.remove(filtered_file_path)
     filtered_file_entry.delete(0, ctk.END)
 
 # Función para obtener el tamaño de la figura y la posición máxima en X
