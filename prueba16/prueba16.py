@@ -22,7 +22,6 @@ win32gui.ShowWindow(hide, win32con.SW_HIDE) """
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
-
     def __init__(self, text_widget):
         self.text_widget = text_widget
 
@@ -35,42 +34,48 @@ class RedirectStdout:
 
 # Función que muestra una ventana emergente con un ícono de advertencia
 def show_warning(message):
-
-    ctk.messagebox.showwarning("Advertencia", message)
+    messagebox.showwarning("Advertencia", message)
 
 # Función para seleccionar un archivo Excel
 def select_file():
-
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
 
     if not file_path:
-        show_warning("No se seleccionó ningún archivo. El programa se cerrará.") # El programa se cierra si no se selecciona un archivo Excel
+        show_warning("No se seleccionó ningún archivo. El programa se cerrará.")  # El programa se cierra si no se selecciona un archivo Excel
         root.destroy()
-        
     else:
-
         file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
 
 # Función para verificar la extensión del archivo Excel
 def is_valid_extension(file_path, valid_extensions=('.xls', '.xlsx')):
-    
     return file_path.endswith(valid_extensions)
+
+# Función para contar celdas vacías consecutivas
+def count_consecutive_empty_cells(row):
+    count = 0
+    max_count = 0
+    for cell in row:
+        if cell is None:
+            count += 1
+            if count > max_count:
+                max_count = count
+        else:
+            count = 0
+    return max_count
 
 # Función para guardar el archivo PDF combinado
 def save_file():
-
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
-    
+
     if not pdf_combined_file:
-        show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
+        show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.")  # El programa se cierra si no se selecciona una ruta
         root.destroy()
 
     return pdf_combined_file
 
 # Función para procesar el archivo seleccionado
 def process_file():
-
     file_path = file_entry.get()
 
     tamaño_hoja = size_var.get()
@@ -88,13 +93,34 @@ def process_file():
     df = sheet.used_range.value
 
     # Iterar sobre las filas del DataFrame
-    for idx, row in enumerate(df):
-
+    for idx, row in enumerate(df, start=1):
         # Verificar si la fila tiene suficientes valores para dibujar el gráfico
         if len(row) > 1:  # Por lo menos dos nodos para crear una conexión
 
+            # Crear el nombre del segundo nodo con saltos de línea después de "\"
+            second_node = row[5] if len(row) > 5 else ""
+            formatted_second_node = second_node.replace("/", "\n") if isinstance(second_node, str) else str(second_node)
+
+            # Verificar si el segundo nodo comienza con "-WG"
+            if isinstance(second_node, str) and second_node.startswith("-WG"):
+                continue  # Omitir esta fila y pasar a la siguiente
+
+            # Combinar las primeras 5 celdas para crear el primer nodo del grafo
+            combined_node_first = row[:5]
+            # Crear el texto del primer nodo combinado visualizando solo las primeras 4 celdas del Excel
+            combined_text_node_first = '\n'.join([str(cell) for cell in combined_node_first[:4] if cell is not None])
+
+            # Combinar las últimas 5 celdas para crear el tercer nodo del grafo
+            combined_node_last = row[-5:]
+            # Crear el texto del tercer nodo combinado visualizando solo las primeras 4 celdas del Excel
+            combined_text_node_last = '\n'.join([str(cell) for cell in combined_node_last[:4] if cell is not None])
+
+            # Verificar si el primer nodo o el tercer nodo están vacíos
+            if not combined_text_node_first.strip() or not combined_text_node_last.strip():
+                continue  # Omitir esta fila y pasar a la siguiente
+
             # Crear un nuevo grafo para cada fila
-            G = create_graph_from_row(row)
+            G = create_graph_from_row(row, combined_text_node_first, formatted_second_node, combined_text_node_last)
 
             # Dibujar el gráfico con el tamaño adecuado
             fig, ax = plt.subplots(figsize=figsize)
@@ -111,11 +137,9 @@ def process_file():
             pdf_merger.append(buf)
             plt.close(fig)  # Cerrar la figura para liberar memoria
 
-            print(f"El diagrama de unifilares para la fila {idx + 1} se ha generado con éxito\n")
-
+            print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
         else:
-
-            print(f"No ha sido posible hacer un diagrama para la fila {idx + 1} porque no hay suficientes datos.\n")
+            print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
 
     # Guardar el archivo PDF combinado
     pdf_combined_file = save_file()
@@ -127,59 +151,68 @@ def process_file():
         # Mensaje de Información al finalizar el proceso
         print(f"El archivo PDF se ha guardado correctamente en: {pdf_combined_file}")
         messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
-
     else:
-
         print("El usuario canceló el guardado.\n")
 
     # Cerrar el libro de Excel y la aplicación de xlwings
     wb.close()
     app.quit()
 
-
 # Función para obtener el tamaño de la figura y la posición máxima en X
 def get_figsize_and_max_pos(tamaño_hoja):
-
-    if tamaño_hoja == 'A4': 
-        return (210 / 25.4, 297 / 25.4), 4 # Tamaño A4
-    
-    else:                   
-        return (420 / 25.4, 297 / 25.4), 8 # Tamaño A3
+    if tamaño_hoja == 'A4':
+        return (210 / 25.4, 297 / 25.4), 4  # Tamaño A4
+    else:
+        return (420 / 25.4, 297 / 25.4), 8  # Tamaño A3
 
 # Función para crear un grafo a partir de una fila
-def create_graph_from_row(row):
+def create_graph_from_row(row, combined_text_node_first, formatted_second_node, combined_text_node_last):
     # Crear un nuevo grafo G
-    G = nx.Graph() 
+    G = nx.Graph()
 
-    # Agregar nodos al grafo G
-    for cell in row:
+    # Agregar el primer nodo combinado
+    G.add_node(combined_text_node_first)
+    
+    # Agregar el segundo nodo (formateado)
+    G.add_node(formatted_second_node)
+
+    # Agregar los nodos de la fila actual (omitiendo las primeras 5 y las últimas 5 celdas, y el segundo nodo)
+    for cell in row[6:-5]:
         if cell is not None:  # Asegurarse de que el valor de la celda no sea None
             G.add_node(cell)
         else:
             G.add_node("NaN")  # Agregar "NaN" para representar una celda vacía
 
-    # Agregar conexiones entre nodos en la fila actual
-    for i in range(len(row) - 1):
-        if row[i] is not None and row[i + 1] is not None:  # Asegurarse de que ni el nodo actual ni el siguiente sean None
-            G.add_edge(row[i], row[i + 1])
-    return G
+    # Agregar el tercer nodo combinado
+    G.add_node(combined_text_node_last)
 
+    # Agregar conexiones entre nodos
+    previous_node = combined_text_node_first
+    G.add_edge(previous_node, formatted_second_node)
+    previous_node = formatted_second_node
+
+    for cell in row[6:-5]:
+        if cell is not None:  # Asegurarse de que el nodo no sea None
+            G.add_edge(previous_node, cell)
+            previous_node = cell
+
+    # Conectar el último nodo de la fila al tercer nodo combinado
+    G.add_edge(previous_node, combined_text_node_last)
+
+    return G
 
 # Función para generar posiciones de los nodos
 def generate_positions(G, x_position_max):
-
     # Inicializar el diccionario de posiciones
-    pos = {} 
+    pos = {}
     x_position, y_position = 0, 0
 
     for node in G.nodes():
-
-        pos[node] = (x_position, y_position) # Inicializar el diccionario de posiciones
+        pos[node] = (x_position, y_position)  # Inicializar el diccionario de posiciones
 
         # Posición de los nodos
         if x_position < x_position_max:
             x_position += 1
-
         else:
             x_position = 1
             y_position -= 1
@@ -191,13 +224,11 @@ def generate_positions(G, x_position_max):
 
 # Función para dibujar el grafo
 def draw_graph(G, pos, ax):
-
     # Dibujar los nodos
     node_colors = ['skyblue' if i % 2 == 0 else 'lightgreen' for i in range(len(G.nodes))]
     node_shapes = ['s' if i % 2 == 0 else 'd' for i in range(len(G.nodes))]
 
-    for i, (node, (x, y)) in enumerate(pos.items()): # Aquí, "pos.items()" devuelve una vista de los elementos (clave, valor) de "pos".
-
+    for i, (node, (x, y)) in enumerate(pos.items()):  # Aquí, "pos.items()" devuelve una vista de los elementos (clave, valor) de "pos".
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
         ax.text(x, y, node, ha='center', va='center')
 
@@ -209,7 +240,7 @@ def draw_graph(G, pos, ax):
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
-root = ctk.CTk() # Crear la ventana principal
+root = ctk.CTk()  # Crear la ventana principal
 root.title("Generador de Diagramas Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
