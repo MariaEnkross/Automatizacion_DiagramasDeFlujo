@@ -5,8 +5,7 @@ import xlwings as xw
 import pandas as pd
 from openpyxl import load_workbook
 import os
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas 
+import shutil
 from PyPDF2 import PdfMerger 
 
 # Librerías para la Creación y Manipulación de Gráficos
@@ -34,40 +33,144 @@ class RedirectStdout:
     def flush(self):
         pass
 
-# Función que muestra una ventana emergente con un ícono de advertencia
+""" # Función que muestra una ventana emergente con un ícono de advertencia
 def show_warning(message):
-    ctk.messagebox.showwarning("Advertencia", message)
+    ctk.messagebox.showwarning("Advertencia", message) """
 
-def select_file_and_duplicate():
-    # Selección del archivo Excel
+# Función para seleccionar un archivo Excel
+def select_file():
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
-
     if not file_path:
-        print("No se seleccionó ningún archivo. El programa se cerrará.") 
+        print("No se seleccionó ningún archivo. El programa se cerrará.")
         return
+    else:
+        return file_path
 
+# Función para duplicar un archivo Excel
+def excel_intermedio(original_file):
     try:
-        # Cargar el archivo Excel original
-        workbook = load_workbook(filename=file_path)
-        
-        # Nombre del archivo y directorio
-        directory = os.path.dirname(file_path)
-        filename = os.path.basename(file_path)
-        
-        # Nuevo nombre de archivo para la copia
-        new_filename = os.path.splitext(filename)[0] + "_copia.xlsx"
-        
-        # Ruta completa del nuevo archivo
-        new_file_path = os.path.join(directory, new_filename)
-        
-        # Guardar el archivo como una nueva copia
-        workbook.save(filename=new_file_path)
-        
-        print(f'Archivo duplicado exitosamente en: {new_file_path}')
-        
-    except Exception as e:
-        print(f'Ocurrió un error al duplicar el archivo: {e}')
+        # Determinar la ruta para la copia del archivo
+        directory = os.path.dirname(original_file)
+        filename = os.path.basename(original_file)
+        new_file_path = os.path.join(directory, "copia_" + filename)
 
+        # Verificar si ya existe una copia del archivo
+        if os.path.exists(new_file_path):
+            overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
+            if not overwrite_confirmation:
+                print("Operación cancelada por el usuario.")
+                return
+
+        # Copiar el archivo Excel original a la nueva ubicación
+        shutil.copy(original_file, new_file_path)
+        print(f'Archivo duplicado exitosamente en: {new_file_path}')
+
+        # Llamar a la función para filtrar duplicados excepto en la columna 6
+        filtros_excel(new_file_path)
+
+    except Exception as e:
+        print(f'Ocurrió un error al guardar el Excel Intermedio')
+
+# Función para filtrar cambios del archivo Excel
+def filtros_excel(file_path):
+    try:
+
+       # Cargar el archivo Excel copiado
+        workbook = load_workbook(filename=file_path)
+
+        # Obtener la hoja activa
+        sheet = workbook.active
+
+        # Obtener el rango de celdas de la hoja
+        max_row = sheet.max_row
+        max_column = sheet.max_column
+
+        ## Eliminar duplicados de celdas
+        for column in range(1, max_column + 1):# Iterar sobre cada celda de cada columna (excepto la columna 6)
+            if column == 6:  # Ignorar la columna 6
+                continue
+            for row in range(2, max_row + 1):
+                cell = sheet.cell(row=row, column=column)
+                value = cell.value
+                if value and isinstance(value, str):
+                    # Dividir el contenido de la celda en partes separadas por espacios
+                    parts = value.split()
+                    # Conservar solo el primer valor único
+                    unique_values = set()
+                    unique_parts = []
+                    for part in parts:
+                        if part not in unique_values:
+                            unique_values.add(part)
+                            unique_parts.append(part)
+                    # Volver a unir las partes en un solo texto
+                    new_value = ' '.join(unique_parts)
+                    # Asignar el nuevo valor a la celda
+                    cell.value = new_value
+                
+        print(f'Se han eliminado los duplicados correctamente en: {file_path}')
+
+        ## Reemplazar "/" por "/ + \n" en la columna 6
+        for row in range(2, max_row + 1):
+            cell = sheet.cell(row=row, column=6)
+            value = cell.value
+            if value and isinstance(value, str):
+                # Reemplazar "/ " por "/\n"
+                new_value = value.replace("/", "/\n")
+                # Asignar el nuevo valor a la celda
+                cell.value = new_value
+
+        print(f'Se han realizado los saltos de línea correctamente en: {file_path}')
+
+        ## Ignorar filas con 4 o más celdas vacías
+        rows_to_delete = [] # Inicializar una lista para almacenar los índices de las filas a eliminar
+
+        # Iterar sobre cada fila
+        for row in range(2, max_row + 1):
+            empty_cell_count = 0
+            for column in range(1, max_column + 1):
+                cell = sheet.cell(row=row, column=column)
+                if cell.value is None:
+                    empty_cell_count += 1
+                else:
+                    if empty_cell_count == 4:
+                        rows_to_delete.pop()  # Eliminar el último índice si no son celdas vacías seguidas
+                    empty_cell_count = 0  # Reiniciar el contador si se encuentra una celda no vacía
+                if empty_cell_count >= 4:
+                    rows_to_delete.append(row)  # Agregar el índice de la fila a la lista
+                    break  # Salir del bucle si hay 4 o más celdas vacías seguidas
+        
+        # Eliminar las filas que contienen 4 o más celdas vacías seguidas
+        for row_index in sorted(rows_to_delete, reverse=True):
+            sheet.delete_rows(row_index)
+
+        print(f'Se han eliminado las filas que no contienen información')
+
+        # Guardar los cambios en el archivo Excel copiado
+        workbook.save(filename=file_path)
+
+        # Mostrar mensaje de confirmación si se sobrescribe el archivo
+        messagebox.showinfo("Información", "Se han guardado los cambios en la copia del archivo.")
+
+        # Abrir el archivo Excel copiado para visualización
+        os.system(file_path) 
+
+    except Exception as e:
+        print(f'Ocurrió un error al filtrar datos del Excel.')
+        raise e
+
+# Función principal
+def main():
+    original_file = select_file()
+
+    if original_file:
+        excel_intermedio(original_file)
+
+# Si este script se ejecuta directamente, llama a la función principal
+if __name__ == "__main__":
+    main()
+
+
+""" 
 # Función para verificar la extensión del archivo Excel
 def is_valid_extension(file_path, valid_extensions=('.xls', '.xlsx')):
     return file_path.endswith(valid_extensions)
@@ -104,10 +207,6 @@ def process_file():
 
     # Leer datos desde Excel
     df = sheet.used_range.value
-
-    # Cerrar el libro de Excel y la aplicación de xlwings
-    wb.close()
-    app.quit()
 
     # Iterar sobre las filas del DataFrame
     for idx, row in enumerate(df, start=1):
@@ -192,7 +291,7 @@ def draw_graph(G, pos, ax):
         ax.text(x, y, node, ha='center', va='center')
 
     nx.draw_networkx_edges(G, pos)
-    ax.axis('off')
+    ax.axis('off') """
 
 ###### Configuración de la apariencia de la ventana principal con customtkinter #####
 
@@ -207,22 +306,23 @@ root.resizable(False, False)  # Desactivar redimensionamiento
 ctk.CTkLabel(root, text="Seleccionar archivo de Excel:").grid(row=0, column=0, padx=10, pady=10)
 file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
-ctk.CTkButton(root, text="Examinar", command=select_file_and_duplicate).grid(row=0, column=2, padx=10, pady=10)
+ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
-# Botón 'Tamaño hoja'
+""" # Botón 'Tamaño hoja'
 ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
 size_var = ctk.StringVar(value="A4")
 size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
-size_combobox.grid(row=1, column=1, padx=10, pady=10)
+size_combobox.grid(row=1, column=1, padx=10, pady=10) """
+
 
 text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
 text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
 sys.stdout = RedirectStdout(text_widget)
 
-# Botón 'Generar PDF'
+""" # Botón 'Generar PDF'
 ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, pady=10)
-
+ """
 # Botón 'Salir'
 ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
 
