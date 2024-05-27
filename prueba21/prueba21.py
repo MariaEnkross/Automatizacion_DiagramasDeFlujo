@@ -57,9 +57,7 @@ def excel_intermedio(original_file):
 
         # Verificar si ya existe una copia del archivo
         if os.path.exists(new_file_path):
-
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
-            
             if not overwrite_confirmation:
                 print("Operación cancelada por el usuario.")
                 return
@@ -99,7 +97,25 @@ def excel_intermedio(original_file):
         print(f'Archivo duplicado exitosamente en: {new_file_path}')
 
     except Exception as e:
-        print(f'Ocurrió un error al guardar el Excel Intermedio')
+        print(f'Ocurrió un error al buscar coincidencias')
+        return []
+
+# Función para crear la hoja de uniones en el archivo Excel copiado
+def hoja_uniones(new_file_path):
+    try:
+        # Cargar el archivo Excel copiado
+        workbook = load_workbook(filename=new_file_path)
+
+        # Verificar si ya existe una hoja llamada 'uniones'
+        if 'uniones' not in workbook.sheetnames:
+            uniones_sheet = workbook.create_sheet('uniones')
+
+            # Guardar los cambios en el archivo Excel copiado
+            workbook.save(filename=new_file_path)
+
+    except Exception as e:
+        print(f'Ocurrió un error al crear la hoja de uniones')
+        print()
 
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
