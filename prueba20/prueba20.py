@@ -34,16 +34,14 @@ class RedirectStdout:
     def flush(self):
         pass
 
-""" # Función que muestra una ventana emergente con un ícono de advertencia
-def show_warning(message):
-    ctk.messagebox.showwarning("Advertencia", message) """
-
 # Función para seleccionar un archivo Excel
 def select_file():
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
+
     if not file_path:
         print("No se seleccionó ningún archivo. El programa se cerrará.")
         return
+    
     else:
         file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
@@ -59,7 +57,9 @@ def excel_intermedio(original_file):
 
         # Verificar si ya existe una copia del archivo
         if os.path.exists(new_file_path):
+
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
+            
             if not overwrite_confirmation:
                 print("Operación cancelada por el usuario.")
                 return
@@ -103,6 +103,7 @@ def excel_intermedio(original_file):
 
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
+
     try:
         # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=file_path)
@@ -126,8 +127,10 @@ def filtros_excel(file_path):
                 cell = sheet.cell(row=row, column=column)
                 value = cell.value
                 if value and isinstance(value, str):
+
                     # Dividir el contenido de la celda en partes separadas por espacios
                     parts = value.split()
+
                     # Conservar solo el primer valor único
                     unique_values = set()
                     unique_parts = []
@@ -135,8 +138,10 @@ def filtros_excel(file_path):
                         if part not in unique_values:
                             unique_values.add(part)
                             unique_parts.append(part)
+
                     # Volver a unir las partes en un solo texto
                     new_value = ' '.join(unique_parts)
+
                     # Asignar el nuevo valor a la celda
                     cell.value = new_value
 
@@ -147,9 +152,12 @@ def filtros_excel(file_path):
         for row in range(2, max_row + 1):
             cell = sheet.cell(row=row, column=6)
             value = cell.value
+
             if value and isinstance(value, str):
+
                 # Reemplazar "/ " por "/\n"
                 new_value = value.replace("/", "/\n")
+
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
@@ -163,8 +171,10 @@ def filtros_excel(file_path):
                 cell = sheet.cell(row=row, column=column)
                 if cell.value is None:
                     empty_cell_count += 1
+
                 else:
                     empty_cell_count = 0  # Reiniciar el contador si se encuentra una celda no vacía
+
                 if empty_cell_count >= 4:
                     filas_sin_elementos.append(row)
                     break  # Salir del bucle si hay 4 o más celdas vacías seguidas
@@ -177,6 +187,7 @@ def filtros_excel(file_path):
             for column in range(1, max_column + 1):
                 if column == 6:  # Ignorar la columna 6
                     continue
+
                 cell = sheet.cell(row=row, column=column)
                 value = cell.value
                 if value and isinstance(value, str) and len(value.split()) > 1:
@@ -193,8 +204,16 @@ def filtros_excel(file_path):
             # Agregar las cabeceras de las columnas
             error_sheet['A1'] = 'Nombre de la Manguera'
             error_sheet['B1'] = 'Motivo del error'
+
         else:
             error_sheet = workbook['errores']
+
+        # Verificar las cabeceras de columna después de haber creado la hoja o acceder a ella
+        if error_sheet['A1'].value is None:
+            error_sheet['A1'] = 'Nombre de la Manguera'
+
+        if error_sheet['B1'].value is None:
+            error_sheet['B1'] = 'Motivo del error'
 
         ### Mover las filas con errores a la hoja 'errores' (solo nombre Manguera)
         error_row_idx = error_sheet.max_row + 1  # Empezar después de la última fila en la hoja 'errores'
@@ -206,8 +225,10 @@ def filtros_excel(file_path):
             # Determinar el tipo de error y asignar el mensaje correspondiente
             if row_index in filas_sin_elementos:
                 motivo_error = "Manguera sin elementos conectados"
+
             elif row_index in filas_varios_elementos:
                 motivo_error = "Manguera con varios origenes/destinos conectados"
+
             else:
                 motivo_error = "Error desconocido"
 
@@ -238,26 +259,28 @@ def filtros_excel(file_path):
         print(f'Ocurrió un error al filtrar datos del Excel.')
         raise e
 
-# Función para procesar el archivo seleccionado
+""" # Función para procesar el archivo seleccionado
 def process_file():
     original_file = file_entry.get()
     if original_file:
         excel_intermedio(original_file)
     else:
-        print("No se seleccionó ningún archivo. El programa se cerrará.")
+        print("No se seleccionó ningún archivo. El programa se cerrará.") """
 
-""" 
 # Función para verificar la extensión del archivo Excel
 def is_valid_extension(file_path, valid_extensions=('.xls', '.xlsx')):
+
     return file_path.endswith(valid_extensions)
 
 # Función para guardar el archivo PDF combinado
 def save_combined_pdf(pdf_merger):
+
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
     
     if not pdf_combined_file:
-        show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
+        ctk.messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
         root.destroy()
+
     else:
         with open(pdf_combined_file, 'wb') as output_pdf:
             pdf_merger.write(output_pdf)
@@ -268,7 +291,8 @@ def save_combined_pdf(pdf_merger):
         ctk.messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
 # Función para procesar el archivo seleccionado
-def process_file():
+def process_file(size_var):
+
     file_path = file_entry.get()
     tamaño_hoja = size_var.get()
     figsize, x_position_max = get_figsize_and_max_pos(tamaño_hoja)
@@ -318,6 +342,7 @@ def process_file():
 
 # Función para obtener el tamaño de la figura y la posición máxima en X
 def get_figsize_and_max_pos(tamaño_hoja):
+    
     if tamaño_hoja == 'A4': 
         return (210 / 25.4, 297 / 25.4), 4 # Tamaño A4
     else:                   
@@ -367,7 +392,7 @@ def draw_graph(G, pos, ax):
         ax.text(x, y, node, ha='center', va='center')
 
     nx.draw_networkx_edges(G, pos)
-    ax.axis('off') """
+    ax.axis('off')
 
 ###### Configuración de la apariencia de la ventana principal con customtkinter #####
 
@@ -384,21 +409,21 @@ file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
 ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
-""" # Botón 'Tamaño hoja'
+# Botón 'Tamaño hoja'
 ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
 size_var = ctk.StringVar(value="A4")
 size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
-size_combobox.grid(row=1, column=1, padx=10, pady=10) """
+size_combobox.grid(row=1, column=1, padx=10, pady=10)
 
-
+# Cuadro de texto
 text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
 text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
 sys.stdout = RedirectStdout(text_widget)
 
-""" # Botón 'Generar PDF'
-ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, pady=10)
- """
+# Botón 'Generar PDF'
+ctk.CTkButton(root, text="Generar PDF", command=lambda: process_file(size_var)).grid(row=3, column=0, columnspan=3, pady=10)
+
 # Botón 'Salir'
 ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
 
