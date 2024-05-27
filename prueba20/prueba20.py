@@ -81,11 +81,14 @@ def excel_intermedio(original_file):
                     workbook.save(filename=new_file_path)
 
                     print(f'Se ha creado la hoja "errores" en: {new_file_path}')
+                    print()
                 else:
                     print('La hoja "errores" ya existe en el archivo.')
+                    print()
             
             except Exception as e:
                 print(f'Ocurrió un error al crear la hoja de errores')
+                print()
 
         # Llamar a la función para crear la hoja de errores
         hoja_errores(new_file_path)
@@ -101,8 +104,7 @@ def excel_intermedio(original_file):
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
     try:
-
-       # Cargar el archivo Excel copiado
+        # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=file_path)
 
         # Obtener la hoja activa
@@ -112,18 +114,20 @@ def filtros_excel(file_path):
         max_row = sheet.max_row
         max_column = sheet.max_column
 
+        # Listas para almacenar las filas con errores
+        filas_varios_elementos = []
+        filas_sin_elementos = []
+
         ## Eliminar duplicados de celdas
-        for column in range(1, max_column + 1):# Iterar sobre cada celda de cada columna (excepto la columna 6)
+        for column in range(1, max_column + 1): # Iterar sobre cada celda de cada columna (excepto la columna 6)
             if column == 6:  # Ignorar la columna 6
                 continue
             for row in range(2, max_row + 1):
                 cell = sheet.cell(row=row, column=column)
                 value = cell.value
                 if value and isinstance(value, str):
-
                     # Dividir el contenido de la celda en partes separadas por espacios
                     parts = value.split()
-
                     # Conservar solo el primer valor único
                     unique_values = set()
                     unique_parts = []
@@ -131,17 +135,13 @@ def filtros_excel(file_path):
                         if part not in unique_values:
                             unique_values.add(part)
                             unique_parts.append(part)
-
                     # Volver a unir las partes en un solo texto
                     new_value = ' '.join(unique_parts)
-
                     # Asignar el nuevo valor a la celda
                     cell.value = new_value
 
-        ## Eliminar multiples origenes/destinos
-                        
-                
         print(f'Se han eliminado los duplicados correctamente en: {file_path}')
+        print()
 
         ## Reemplazar "/" por "/ + \n" en la columna 6
         for row in range(2, max_row + 1):
@@ -152,13 +152,11 @@ def filtros_excel(file_path):
                 new_value = value.replace("/", "/\n")
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
-        
+
         print(f'Se han creado los saltos de línea correctamente en: {file_path}')
+        print()
 
-        # Ignorar filas con 4 o más celdas vacías
-        rows_to_delete = [] # Inicializar una lista para almacenar los índices de las filas a eliminar
-
-        # Iterar sobre cada fila
+        ## Detectar filas con 4 o más celdas vacías
         for row in range(2, max_row + 1):
             empty_cell_count = 0
             for column in range(1, max_column + 1):
@@ -166,18 +164,66 @@ def filtros_excel(file_path):
                 if cell.value is None:
                     empty_cell_count += 1
                 else:
-                    if empty_cell_count == 4:
-                        rows_to_delete.pop()  # Eliminar el último índice si no son celdas vacías seguidas
                     empty_cell_count = 0  # Reiniciar el contador si se encuentra una celda no vacía
                 if empty_cell_count >= 4:
-                    rows_to_delete.append(row)  # Agregar el índice de la fila a la lista
+                    filas_sin_elementos.append(row)
                     break  # Salir del bucle si hay 4 o más celdas vacías seguidas
-        
-        # Eliminar las filas que contienen 4 o más celdas vacías seguidas
-        for row_index in sorted(rows_to_delete, reverse=True):
+            
+        print(f'Se han eliminado las mangueras sin elementos conectados correctamente en: {file_path}')
+        print()
+
+        ## Detectar filas con celdas que tienen más de un valor distinto
+        for row in range(2, max_row + 1):
+            for column in range(1, max_column + 1):
+                if column == 6:  # Ignorar la columna 6
+                    continue
+                cell = sheet.cell(row=row, column=column)
+                value = cell.value
+                if value and isinstance(value, str) and len(value.split()) > 1:
+                    filas_varios_elementos.append(row)
+                    break
+
+        print(f'Se han eliminado las mangueras con varios origenes/destinos correctamente en: {file_path}')
+        print()
+
+        # Verificar si ya existe una hoja llamada 'errores'
+        if 'errores' not in workbook.sheetnames:
+            error_sheet = workbook.create_sheet('errores')
+
+            # Agregar las cabeceras de las columnas
+            error_sheet['A1'] = 'Nombre de la Manguera'
+            error_sheet['B1'] = 'Motivo del error'
+        else:
+            error_sheet = workbook['errores']
+
+        ### Mover las filas con errores a la hoja 'errores' (solo nombre Manguera)
+        error_row_idx = error_sheet.max_row + 1  # Empezar después de la última fila en la hoja 'errores'
+        for row_index in set(filas_sin_elementos + filas_varios_elementos):
+
+            # Obtener el valor de la columna 'Manguera' de la fila con error
+            manguera_value = sheet.cell(row=row_index, column=6).value
+
+            # Determinar el tipo de error y asignar el mensaje correspondiente
+            if row_index in filas_sin_elementos:
+                motivo_error = "Manguera sin elementos conectados"
+            elif row_index in filas_varios_elementos:
+                motivo_error = "Manguera con varios origenes/destinos conectados"
+            else:
+                motivo_error = "Error desconocido"
+
+            # Copiar el valor de la columna 'Manguera' a la hoja 'errores'
+            error_sheet.cell(row=error_row_idx, column=1, value=manguera_value)
+
+            # Agregar el motivo del error en la columna 'Motivo del error' de la hoja 'errores'
+            error_sheet.cell(row=error_row_idx, column=2, value=motivo_error)
+            error_row_idx += 1
+
+        # Eliminar las filas que cumplen las condiciones en la hoja original
+        for row_index in sorted(set(filas_sin_elementos + filas_varios_elementos), reverse=True):
             sheet.delete_rows(row_index)
 
-        print(f'Se han eliminado las filas que no contienen información') 
+        print(f'Se han movido las filas con errores a la hoja "errores" y se han eliminado de la hoja original.')
+        print()
 
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
@@ -186,7 +232,7 @@ def filtros_excel(file_path):
         messagebox.showinfo("Información", "Se han guardado los cambios en la copia del archivo.")
 
         # Abrir el archivo Excel copiado para visualización
-        os.system(file_path) 
+        os.system(file_path)
 
     except Exception as e:
         print(f'Ocurrió un error al filtrar datos del Excel.')
