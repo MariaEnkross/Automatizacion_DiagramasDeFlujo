@@ -65,12 +65,12 @@ def excel_intermedio(original_file):
         # Copiar el archivo Excel original a la nueva ubicación
         shutil.copy(original_file, new_file_path)
 
-        # Función para crear la hoja de errores en el archivo Excel copiado
-        def hoja_errores(new_file_path):
-            try:
-                # Cargar el archivo Excel copiado
-                workbook = load_workbook(filename=new_file_path)
+        # Cargar el archivo Excel copiado
+        workbook = load_workbook(filename=new_file_path)
 
+        # Función para crear la hoja de errores en el archivo Excel copiado
+        def hoja_errores(workbook):
+            try:
                 # Verificar si ya existe una hoja llamada 'errores'
                 if 'errores' not in workbook.sheetnames:
                     error_sheet = workbook.create_sheet('errores')
@@ -78,7 +78,7 @@ def excel_intermedio(original_file):
                     # Guardar los cambios en el archivo Excel copiado
                     workbook.save(filename=new_file_path)
 
-                    print(f'Se ha creado la hoja "errores" en: {new_file_path}')
+                    print(f'Se ha creado la hoja "errores"')
                     print()
                 else:
                     print('La hoja "errores" ya existe en el archivo.')
@@ -89,34 +89,44 @@ def excel_intermedio(original_file):
                 print()
 
         # Llamar a la función para crear la hoja de errores
-        hoja_errores(new_file_path)
+        hoja_errores(workbook)
 
         # Llamar a la función de filtros_excel
         filtros_excel(new_file_path)
 
-        print(f'Archivo duplicado exitosamente en: {new_file_path}')
+        # Función para crear la hoja de uniones en el archivo Excel copiado
+        def hoja_uniones(workbook):
+            try:
+                # Verificar si ya existe una hoja llamada 'uniones'
+                if 'uniones' not in workbook.sheetnames:
+                    union_sheet = workbook.create_sheet('uniones')
+
+                    # Guardar los cambios en el archivo Excel copiado
+                    workbook.save(filename=new_file_path)
+
+                    print(f'Se ha creado la hoja "uniones"')
+                    print()
+                else:
+                    print('La hoja "uniones" ya existe en el archivo.')
+                    print()
+            
+            except Exception as e:
+                print(f'Ocurrió un error al crear la hoja de uniones')
+                print()
+
+        # Llamar a la función para crear la hoja de uniones
+        hoja_uniones(workbook)
+
+        # Llamar a la función de filtros_excel
+        filtros_excel(new_file_path)
+
 
     except Exception as e:
-        print(f'Ocurrió un error al buscar coincidencias')
-        return []
-
-# Función para crear la hoja de uniones en el archivo Excel copiado
-def hoja_uniones(new_file_path):
-    try:
-        # Cargar el archivo Excel copiado
-        workbook = load_workbook(filename=new_file_path)
-
-        # Verificar si ya existe una hoja llamada 'uniones'
-        if 'uniones' not in workbook.sheetnames:
-            uniones_sheet = workbook.create_sheet('uniones')
-
-            # Guardar los cambios en el archivo Excel copiado
-            workbook.save(filename=new_file_path)
-
-    except Exception as e:
-        print(f'Ocurrió un error al crear la hoja de uniones')
+        print(f'Ocurrió un error al crear el excel intermedio')
         print()
 
+        return []
+    
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
 
@@ -136,7 +146,7 @@ def filtros_excel(file_path):
         filas_sin_elementos = []
 
         ## Eliminar duplicados de celdas
-        for column in range(1, max_column + 1): # Iterar sobre cada celda de cada columna (excepto la columna 6)
+        for column in range(1, max_column + 1): # Iterar sobre cada celda de cada columna
             if column == 6:  # Ignorar la columna 6
                 continue
             for row in range(2, max_row + 1):
@@ -433,8 +443,8 @@ size_var = ctk.StringVar(value="A4")
 size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
 size_combobox.grid(row=1, column=1, padx=10, pady=10)
 
-# Botón 'Generar PDF'
-ctk.CTkButton(root, text="Generar PDF", command=lambda: process_file()).grid(row=3, column=0, columnspan=3, pady=10)
+""" # Botón 'Generar PDF'
+ctk.CTkButton(root, text="Generar PDF", command=lambda: process_file()).grid(row=3, column=0, columnspan=3, pady=10) """
  
 # Botón 'Salir'
 ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
