@@ -208,10 +208,12 @@ def filtros_excel(file_path):
         print(f'Se han eliminado las mangueras sin elementos conectados correctamente en: {file_path}')
         print()
 
-        ## Detectar filas con celdas que tienen más de un valor distinto
+        ## Detectar varios origenes/destinos (ignorar columna 4, 6, 10)
+        ignorar_columnas = [4, 6, 10]
+
         for row in range(2, max_row + 1):
             for column in range(1, max_column + 1):
-                if column == 6:  # Ignorar la columna 6
+                if column in ignorar_columnas:  # Ignorar la columna 4, 6, 10
                     continue
 
                 cell = sheet.cell(row=row, column=column)
@@ -222,6 +224,42 @@ def filtros_excel(file_path):
 
         print(f'Se han eliminado las mangueras con varios origenes/destinos correctamente en: {file_path}')
         print()
+
+        ## Obtener los valores de la columna 6
+        column_6_values = [cell.value.split('/')[0] if cell.value else None for cell in sheet['F'][1:]]
+
+        # Recorre las celdas de la columna 4
+        for i, row in enumerate(sheet.iter_rows(min_row=2, min_col=4, max_col=4), start=2):
+            cell_value = row[0].value
+            if cell_value:
+                values = cell_value.split()  # Divide el valor de la celda en una lista de palabras
+                first_value = None
+                for value in values:
+                    if not value.startswith('-W'):
+                        first_value = value
+                        break
+                if first_value and first_value.split('/')[0] not in column_6_values:
+                    row[0].value = first_value
+                else:
+                    row[0].value = None
+
+        # Recorrer las celdas de la columna 10
+        for i, row in enumerate(sheet.iter_rows(min_row=2, min_col=10, max_col=10), start=2):
+            cell_value = row[0].value
+            if cell_value:
+                values = cell_value.split()  # Divide el valor de la celda en una lista de palabras
+                first_value = None
+                for value in values:
+                    if not value.startswith('-W'):
+                        first_value = value
+                        break
+                if first_value and first_value.split('/')[0] not in column_6_values:
+                    row[0].value = first_value
+                else:
+                    row[0].value = None
+
+        print(f'Se han eliminado las mangueras -W en: {file_path}')
+        print() 
 
         # Verificar si ya existe una hoja llamada 'errores'
         if 'errores' not in workbook.sheetnames:
