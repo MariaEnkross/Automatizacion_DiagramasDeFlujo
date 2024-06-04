@@ -204,113 +204,159 @@ def filtros_excel(file_path):
 
             # Procesar la columna B
             value_column_B = sheet.cell(row=row, column=2).value
-            if value_column_B:
-                for subvalue in value_column_B.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=6).value:
-                        split_values_F = sheet.cell(row=row, column=6).value.split("/")
+            if value_column_B:  # Verificar si hay un valor en la columna B
+                value_column_F = sheet.cell(row=row, column=6).value
+
+                if value_column_F and "/" in value_column_F:  # Verificar si hay un valor en la columna F y contiene "/"
+                    encontrado = False  # Bandera para verificar si se encontró un subvalor
+
+                    for subvalue in value_column_B.split():  # Verificar cada subvalor del valor de la columna B
+                        split_values_F = value_column_F.split("/")
+                        
                         if len(split_values_F) > 0 and subvalue in split_values_F[0]:  # Verificar si está antes de la barra en la columna F
                             sheet.cell(row=row, column=2).value = subvalue
+                            encontrado = True
                             break
+                    if not encontrado:
+                        filas_con_errores.add(row)  # Agregar a filas con errores si no se encontró ningún subvalor
                 else:
-                    filas_con_errores.add(row)
+                    continue  # Continuar con la siguiente fila si la columna F no contiene "/"
+            else:
+                filas_con_errores.add(row)
 
             # Procesar la columna C
             value_column_C = sheet.cell(row=row, column=3).value
-            if value_column_C:
-                for subvalue in value_column_C.split():  # Verificar cada subvalor del valor de la columna C
-                    if "/" in sheet.cell(row=row, column=6).value:
-                        split_values_F = sheet.cell(row=row, column=6).value.split("/")
+            if value_column_C:  # Verificar si hay un valor en la columna B
+                value_column_F = sheet.cell(row=row, column=6).value
+
+                if value_column_F and "/" in value_column_F:  # Verificar si hay un valor en la columna F y contiene "/"
+                    encontrado = False  # Bandera para verificar si se encontró un subvalor
+
+                    for subvalue in value_column_C.split():  # Verificar cada subvalor del valor de la columna B
+                        split_values_F = value_column_F.split("/")
+                        
                         if len(split_values_F) > 0 and subvalue in split_values_F[0]:  # Verificar si está antes de la barra en la columna F
                             sheet.cell(row=row, column=3).value = subvalue
+                            encontrado = True
                             break
+                    if not encontrado:
+                        filas_con_errores.add(row)  # Agregar a filas con errores si no se encontró ningún subvalor
                 else:
-                    filas_con_errores.add(row)
+                    continue  # Continuar con la siguiente fila si la columna F no contiene "/"
+            else:
+                filas_con_errores.add(row)
 
             # Procesar la columna H
             value_column_H = sheet.cell(row=row, column=8).value
-            if value_column_H:
-                for subvalue in value_column_H.split():  # Verificar cada subvalor del valor de la columna H
-                    if "/" in sheet.cell(row=row, column=6).value:
-                        split_values_F = sheet.cell(row=row, column=6).value.split("/")
-                        if len(split_values_F) > 1 and subvalue in split_values_F[1]:  # Verificar si está después de la barra en la columna F
+            if value_column_H:  # Verificar si hay un valor en la columna B
+                value_column_F = sheet.cell(row=row, column=6).value
+
+                if value_column_F and "/" in value_column_F:  # Verificar si hay un valor en la columna F y contiene "/"
+                    encontrado = False  # Bandera para verificar si se encontró un subvalor
+
+                    for subvalue in value_column_H.split():  # Verificar cada subvalor del valor de la columna B
+                        split_values_F = value_column_F.split("/")
+                        
+                        if len(split_values_F) > 0 and subvalue in split_values_F[1]:  # Verificar si está después de la barra en la columna F
                             sheet.cell(row=row, column=8).value = subvalue
+                            encontrado = True
                             break
+                    if not encontrado:
+                        filas_con_errores.add(row)  # Agregar a filas con errores si no se encontró ningún subvalor
                 else:
-                    filas_con_errores.add(row)
+                    continue  # Continuar con la siguiente fila si la columna F no contiene "/"
+            else:
+                filas_con_errores.add(row)
 
             # Procesar la columna I
             value_column_I = sheet.cell(row=row, column=9).value
-            if value_column_I:
-                for subvalue in value_column_I.split():  # Verificar cada subvalor del valor de la columna I
-                    if "/" in sheet.cell(row=row, column=6).value:
-                        split_values_F = sheet.cell(row=row, column=6).value.split("/")
-                        if len(split_values_F) > 1 and subvalue in split_values_F[1]:  # Verificar si está después de la barra en la columna F
+            if value_column_I:  # Verificar si hay un valor en la columna B
+                value_column_F = sheet.cell(row=row, column=6).value
+
+                if value_column_F and "/" in value_column_F:  # Verificar si hay un valor en la columna F y contiene "/"
+                    encontrado = False  # Bandera para verificar si se encontró un subvalor
+
+                    for subvalue in value_column_I.split():  # Verificar cada subvalor del valor de la columna B
+                        split_values_F = value_column_F.split("/")
+                        
+                        if len(split_values_F) > 0 and subvalue in split_values_F[1]:  # Verificar si está después de la barra en la columna F
                             sheet.cell(row=row, column=9).value = subvalue
+                            encontrado = True
                             break
+                    if not encontrado:
+                        filas_con_errores.add(row)  # Agregar a filas con errores si no se encontró ningún subvalor
                 else:
-                    filas_con_errores.add(row)
+                    continue  # Continuar con la siguiente fila si la columna F no contiene "/"
+            else:
+                filas_con_errores.add(row)
 
         print(f'Se han verificado los elementos de las columnas B, H, C, e I correctamente en: {file_path}')
         print()
 
-        ## Comprobar duplicados, contenido de las celdas, primer valor... en columna D (si no, a errores)
+        ## Comprobar elementos columna D y J (si no, a errores)
         for row in range(1, sheet.max_row + 1):
 
             # Procesar la columna D
             cell_value_D = sheet.cell(row=row, column=4).value
 
-            if cell_value_D:
-
-                # Dividir los valores de la celda en la columna D
-                values_D = cell_value_D.split()
+            if cell_value_D:  # Verificar si hay un valor en la columna D
                 
-                # Conservar solo el primer valor
-                first_value = values_D[0].strip()
+                values_D = cell_value_D.split() # Dividir los valores de la celda en la columna D
 
-                # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
-                if first_value.startswith("-W"):
-                    filas_valores_repetidos.add(row)
+                if values_D:  
+                    
+                    first_value = values_D[0].strip() # Conservar solo el primer valor
 
-                # Verificar si el primer valor está en la parte antes de la barra en la columna F
-                cell_value_F = sheet.cell(row=row, column=6).value
-                if cell_value_F and "/" in cell_value_F:
-                    split_values_F = cell_value_F.split("/")
-
-                    if len(split_values_F) > 0 and first_value not in split_values_F[0]:
+                    # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
+                    if first_value.startswith("-W"):
                         filas_valores_repetidos.add(row)
-                else:
-                    filas_valores_repetidos.add(row)
 
-                # Actualizar la celda en la columna D con el primer valor
-                sheet.cell(row=row, column=4).value = first_value
+                    # Verificar si el primer valor está en la parte antes de la barra en la columna F
+                    cell_value_F = sheet.cell(row=row, column=6).value
+                    if cell_value_F:
+                        if "/" in cell_value_F:
+                            split_values_F = cell_value_F.split("/")
+
+                            if len(split_values_F) > 0 and first_value not in split_values_F[0]:
+                                filas_valores_repetidos.add(row)
+
+                        # No añadir a filas_valores_repetidos si no hay "/" en F
+                    else:
+                        filas_valores_repetidos.add(row)
+
+                    # Actualizar la celda en la columna D con el primer valor
+                    sheet.cell(row=row, column=4).value = first_value
 
             # Procesar la columna J
-            cell_value_J = sheet.cell(row=row, column=10).value
+            cell_value_D = sheet.cell(row=row, column=10).value
 
-            if cell_value_J:
+            if cell_value_D:  # Verificar si hay un valor en la columna D
+                
+                values_D = cell_value_D.split() # Dividir los valores de la celda en la columna D
 
-                # Dividir los valores de la celda en la columna J
-                values_J = cell_value_J.split(',')
+                if values_D:  
+                    
+                    first_value = values_D[0].strip() # Conservar solo el primer valor
 
-                # Conservar solo el primer valor
-                first_value_J = values_J[0].strip()
-
-                # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
-                if first_value_J.startswith("-W"):
-                    filas_valores_repetidos.add(row)
-
-                # Verificar si el primer valor está en la parte después de la barra en la columna F
-                cell_value_F = sheet.cell(row=row, column=6).value
-                if cell_value_F and "/" in cell_value_F:
-                    split_values_F = cell_value_F.split("/")
-
-                    if len(split_values_F) > 1 and first_value_J not in split_values_F[1]:
+                    # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
+                    if first_value.startswith("-W"):
                         filas_valores_repetidos.add(row)
-                else:
-                    filas_valores_repetidos.add(row)
 
-                # Actualizar la celda en la columna J con el primer valor
-                sheet.cell(row=row, column=10).value = first_value_J
+                    # Verificar si el primer valor está en la parte antes de la barra en la columna F
+                    cell_value_F = sheet.cell(row=row, column=6).value
+                    if cell_value_F:
+                        if "/" in cell_value_F:
+                            split_values_F = cell_value_F.split("/")
+
+                            if len(split_values_F) > 0 and first_value not in split_values_F[1]:
+                                filas_valores_repetidos.add(row)
+
+                        # No añadir a filas_valores_repetidos si no hay "/" en F
+                    else:
+                        filas_valores_repetidos.add(row)
+
+                    # Actualizar la celda en la columna D con el primer valor
+                    sheet.cell(row=row, column=10).value = first_value
 
         print(f'Se han corregido los elementos de las columnas D y J correctamente en: {file_path}')
         print()
@@ -348,7 +394,7 @@ def filtros_excel(file_path):
                 motivo_error = "La Manguera no coincide con los origenes/destinos"
 
             elif row_index in filas_valores_repetidos:
-                motivo_error = "La Manguera contiene varios elementos erróneos en la columna D"
+                motivo_error = "La Manguera contiene varios elementos erróneos en la columna D/J"
 
             else:
                 motivo_error = "Error desconocido"
