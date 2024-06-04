@@ -70,18 +70,11 @@ def excel_intermedio(original_file):
         # Función para crear la hoja de errores en el archivo Excel copiado
         def hoja_errores(workbook):
             try:
-                # Verificar si ya existe una hoja llamada 'errores'
-                if 'errores' not in workbook.sheetnames:
-                    error_sheet = workbook.create_sheet('errores')
+                # Crear hoja llamada 'errores'
+                error_sheet = workbook.create_sheet('errores')
 
-                    # Guardar los cambios en el archivo Excel copiado
-                    workbook.save(filename=new_file_path)
-
-                    print(f'Se ha creado la hoja "errores"')
-                    print()
-                else:
-                    print('La hoja "errores" ya existe en el archivo.')
-                    print()
+                # Guardar los cambios en el archivo Excel copiado
+                workbook.save(filename=new_file_path)
             
             except Exception as e:
                 print(f'Ocurrió un error al crear la hoja de errores')
@@ -92,33 +85,6 @@ def excel_intermedio(original_file):
 
         # Llamar a la función de filtros_excel
         filtros_excel(new_file_path)
-
-        # Función para crear la hoja de uniones en el archivo Excel copiado
-        def hoja_uniones(workbook):
-            try:
-                # Verificar si ya existe una hoja llamada 'uniones'
-                if 'uniones' not in workbook.sheetnames:
-                    union_sheet = workbook.create_sheet('uniones')
-
-                    # Guardar los cambios en el archivo Excel copiado
-                    workbook.save(filename=new_file_path)
-
-                    print(f'Se ha creado la hoja "uniones"')
-                    print()
-                else:
-                    print('La hoja "uniones" ya existe en el archivo.')
-                    print()
-            
-            except Exception as e:
-                print(f'Ocurrió un error al crear la hoja de uniones')
-                print()
-
-        # Llamar a la función para crear la hoja de uniones
-        hoja_uniones(workbook)
-
-        # Llamar a la función de filtros_excel
-        filtros_excel(new_file_path)
-
 
     except Exception as e:
         print(f'Ocurrió un error al crear el excel intermedio. Por favor, cierre la copia de {filename}, si ya existe.')
@@ -199,7 +165,7 @@ def filtros_excel(file_path):
         print(f'Se han eliminado los duplicados correctamente en: {file_path}')
         print()
         
-        ## Comprobar contenido de las celdas de las columnas B, H, C, e I, con la columna F (si no, a errores)
+        ## Comprobar contenido de las celdas de las columnas B, C, H e I, con la columna F (si no, a errores)
         for row in range(1, sheet.max_row + 1):
 
             # Procesar la columna B
@@ -361,7 +327,7 @@ def filtros_excel(file_path):
         print(f'Se han corregido los elementos de las columnas D y J correctamente en: {file_path}')
         print()
 
-        ### Verificar si ya existe una hoja llamada 'errores'
+        # Verificar si ya existe una hoja llamada 'errores'
         if 'errores' not in workbook.sheetnames:
             error_sheet = workbook.create_sheet('errores')
 
