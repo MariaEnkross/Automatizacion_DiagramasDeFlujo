@@ -122,7 +122,7 @@ def excel_intermedio(original_file):
 
 
     except Exception as e:
-        print(f'Ocurrió un error al crear el excel intermedio')
+        print(f'Ocurrió un error al crear el excel intermedio. Por favor, cierre la copia de {filename}, si ya existe.')
         print()
 
         return []
@@ -146,29 +146,14 @@ def filtros_excel(file_path):
         filas_sin_elementos = []
 
         ## Eliminar duplicados de celdas
-        for column in range(1, max_column + 1): # Iterar sobre cada celda de cada columna
-            if column == 6:  # Ignorar la columna 6
-                continue
+        for column in range(1, max_column + 1):
             for row in range(2, max_row + 1):
                 cell = sheet.cell(row=row, column=column)
                 value = cell.value
                 if value and isinstance(value, str):
-
-                    # Dividir el contenido de la celda en partes separadas por espacios
                     parts = value.split()
-
-                    # Conservar solo el primer valor único
-                    unique_values = set()
-                    unique_parts = []
-                    for part in parts:
-                        if part not in unique_values:
-                            unique_values.add(part)
-                            unique_parts.append(part)
-
-                    # Volver a unir las partes en un solo texto
+                    unique_parts = list(dict.fromkeys(parts))
                     new_value = ' '.join(unique_parts)
-
-                    # Asignar el nuevo valor a la celda
                     cell.value = new_value
 
         print(f'Se han eliminado los duplicados correctamente en: {file_path}')
@@ -208,14 +193,9 @@ def filtros_excel(file_path):
         print(f'Se han eliminado las mangueras sin elementos conectados correctamente en: {file_path}')
         print()
 
-        ## Detectar varios origenes/destinos (ignorar columna 4, 6, 10)
-        ignorar_columnas = [4, 6, 10]
-
+        ## Detectar varios origenes/destinos en las columnas 2 y 8
         for row in range(2, max_row + 1):
-            for column in range(1, max_column + 1):
-                if column in ignorar_columnas:  # Ignorar la columna 4, 6, 10
-                    continue
-
+            for column in [2, 8]:
                 cell = sheet.cell(row=row, column=column)
                 value = cell.value
                 if value and isinstance(value, str) and len(value.split()) > 1:
@@ -231,35 +211,48 @@ def filtros_excel(file_path):
         # Recorre las celdas de la columna 4
         for i, row in enumerate(sheet.iter_rows(min_row=2, min_col=4, max_col=4), start=2):
             cell_value = row[0].value
+
             if cell_value:
                 values = cell_value.split()  # Divide el valor de la celda en una lista de palabras
                 first_value = None
+
+
                 for value in values:
-                    if not value.startswith('-W'):
+                    if not value.startswith('-W'): # Si el primer valor no empieza por -W, lo guarda
                         first_value = value
                         break
-                if first_value and first_value.split('/')[0] not in column_6_values:
-                    row[0].value = first_value
+
+                if first_value and first_value.split('/')[0] not in column_6_values: # Comprueba que el primer valor coincida con nombre de la manguera antes de /
+                    row[0].value = first_value 
+
                 else:
-                    row[0].value = None
+                    if value.startswith('-W'): # Si el primer valor empieza por -W, lo elimina y manda la fila a hoja errores
+                        row[0].value = None
+                        filas_sin_elementos.append(i)
 
         # Recorrer las celdas de la columna 10
         for i, row in enumerate(sheet.iter_rows(min_row=2, min_col=10, max_col=10), start=2):
             cell_value = row[0].value
+
             if cell_value:
                 values = cell_value.split()  # Divide el valor de la celda en una lista de palabras
                 first_value = None
+
                 for value in values:
-                    if not value.startswith('-W'):
+                    if not value.startswith('-W'): # Si el primer valor no empieza por -W, lo guarda
                         first_value = value
                         break
-                if first_value and first_value.split('/')[0] not in column_6_values:
-                    row[0].value = first_value
-                else:
-                    row[0].value = None
 
-        print(f'Se han eliminado las mangueras -W en: {file_path}')
-        print() 
+                if first_value and first_value.split('/')[0] not in column_6_values: # Comprueba que el primer valor coincida con nombre de la manguera despues de /
+                    row[0].value = first_value
+
+                else:
+                    if value.startswith('-W'): # Si el primer valor empieza por -W, lo elimina y manda la fila a hoja errores
+                        row[0].value = None
+                        filas_sin_elementos.append(i)
+
+        print(f'Se han eliminado las filas con errores en las columnas 4 y 10 correctamente en: {file_path}.')
+        print()
 
         # Verificar si ya existe una hoja llamada 'errores'
         if 'errores' not in workbook.sheetnames:
