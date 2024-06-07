@@ -47,6 +47,35 @@ def select_file():
         file_entry.insert(0, file_path)
         excel_intermedio(file_path)
 
+# Función para corregir errores #¿NOMBRE? en un archivo Excel
+def corregir_errores_nombre(file_path):
+    try:
+        # Abrir el libro con xlwings
+        app = xw.App(visible=False)
+        wb = app.books.open(file_path)
+        
+        for sheet in wb.sheets:
+            
+            # Recalcular todas las fórmulas
+            sheet.api.Calculate()
+
+            for cell in sheet.used_range:
+                if cell.formula and cell.value == '#¿NOMBRE?':
+
+                    # Recalcular la celda específica si sigue con el error
+                    cell.api.Calculate()
+        
+        # Guardar y cerrar el libro
+        wb.save()
+        wb.close()
+        app.quit()
+
+        print(f"Errores #¿NOMBRE? corregidos en {file_path}")
+
+    except Exception as e:
+
+        print(f"Error al corregir #¿NOMBRE?: {str(e)}")
+
 # Función para duplicar un archivo Excel
 def excel_intermedio(original_file):
     try:
@@ -62,10 +91,10 @@ def excel_intermedio(original_file):
                 print("Operación cancelada por el usuario.")
                 return
             
-        # Verificar si ya existe una copia del archivo
+        """ # Verificar si ya existe una copia del archivo
         if os.path.exists(new_file_path):
             messagebox.showwarning("Advertencia", "La copia del archivo está abierta. Por favor, ciérrela para continuar.")
-            return
+            return """
 
         # Copiar el archivo Excel original a la nueva ubicación
         shutil.copy(original_file, new_file_path)
@@ -264,16 +293,15 @@ def filtros_excel(file_path):
                 else:
                     filas_con_errores.add(row)
 
-        ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC1" o "CP1"
-        for row in range(1, sheet.max_row + 1):
+        ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC1"
+        for row in range(1, max_row + 1):
 
             value_column_B = sheet.cell(row=row, column=2).value
             value_column_M = sheet.cell(row=row, column=13).value
 
-            if value_column_B and value_column_M:
-
-                if (value_column_B == "CC1" and value_column_M == "CC1") or (value_column_B == "CP1" and value_column_M == "CP1"):
-                    interno_error.add(row)
+            # Verificar si ambos valores son "CC1" o "++CP1"
+            if (value_column_B == "++CC1" and value_column_M == "++CC1") or (value_column_B == "++CP1" and value_column_M == "++CP1"):
+                interno_error.add(row)
 
         ## 6. Agregar saltos de línea en la columna H
         for row in range(1, max_row + 1):
@@ -287,7 +315,7 @@ def filtros_excel(file_path):
 
                         # Asignar el nuevo valor a la celda
                         cell.value = new_value
-        
+
         # Verificar si ya existe una hoja llamada 'errores'
         if 'errores' not in workbook.sheetnames:
             error_sheet = workbook.create_sheet('errores')
@@ -320,7 +348,7 @@ def filtros_excel(file_path):
             # Determinar el tipo de error y asignar el mensaje correspondiente
             if row_index in filas_sin_elementos:
                 motivo_error = "Manguera sin Origenes ni Destinos conectados"
-            
+
             elif row_index in filas_con_errores:
                 motivo_error = "El Origen y/o Destino no se encuentra en el nombre de la Manguera"
 
@@ -328,33 +356,33 @@ def filtros_excel(file_path):
                 motivo_error = "Elementos no encontrados en el nombre de la Manguera"
 
             elif row_index in interno_error:
-                motivo_error = "Interno CC1/CP1..."
-                
+                motivo_error = "Interno CC1/CP1"
+
             else:
                 motivo_error = "Error desconocido"
 
             # Copiar el valor de la columna 'Manguera' a la hoja 'errores'
             error_sheet.cell(row=error_row_idx, column=1, value=manguera_value)
 
-            # Agregar el motivo del error en la columna 'Motivo del error' de la hoja 'errores'
-            error_sheet.cell(row=error_row_idx, column=3, value=motivo_error)
-
             # Agregar la página donde se encuentra el error
             page_value = sheet.cell(row=row_index, column=11).value  # Obtener el valor de la columna K (columna 11)
             error_sheet.cell(row=error_row_idx, column=2, value=page_value)
 
+            # Agregar el motivo del error en la columna 'Motivo del error' de la hoja 'errores'
+            error_sheet.cell(row=error_row_idx, column=3, value=motivo_error)
+
             error_row_idx += 1
 
         ## Eliminar las filas que cumplen las condiciones en la hoja original
-        for row_index in sorted(filas_sin_elementos.union(filas_con_errores), reverse=True):
+        for row_index in sorted(filas_sin_elementos.union(filas_con_errores, interno_error), reverse=True):
             sheet.delete_rows(row_index)
 
         print(f'Los cambios han sido guardados con éxito en {file_path}, puede continuar para generar los Diagramas Unifilares...')
         print() 
-       
+        
         # Eliminar las filas con errores
         for row_index in sorted(filas_sin_elementos.union(filas_con_errores), reverse=True):
-            sheet.delete_rows(row_index)
+            sheet.delete_rows(row_index) 
 
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
