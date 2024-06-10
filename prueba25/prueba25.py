@@ -6,6 +6,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 import os
+import re
 import shutil
 from PyPDF2 import PdfMerger 
 
@@ -46,35 +47,6 @@ def select_file():
         file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
         excel_intermedio(file_path)
-
-# Función para corregir errores #¿NOMBRE? en un archivo Excel
-def corregir_errores_nombre(file_path):
-    try:
-        # Abrir el libro con xlwings
-        app = xw.App(visible=False)
-        wb = app.books.open(file_path)
-        
-        for sheet in wb.sheets:
-            
-            # Recalcular todas las fórmulas
-            sheet.api.Calculate()
-
-            for cell in sheet.used_range:
-                if cell.formula and cell.value == '#¿NOMBRE?':
-
-                    # Recalcular la celda específica si sigue con el error
-                    cell.api.Calculate()
-        
-        # Guardar y cerrar el libro
-        wb.save()
-        wb.close()
-        app.quit()
-
-        print(f"Errores #¿NOMBRE? corregidos en {file_path}")
-
-    except Exception as e:
-
-        print(f"Error al corregir #¿NOMBRE?: {str(e)}")
 
 # Función para duplicar un archivo Excel
 def excel_intermedio(original_file):
@@ -151,6 +123,20 @@ def filtros_excel(file_path):
         filas_con_errores = set()
         elementos_no_encontrados = set()
         interno_error = set()
+
+        # Modificar las celdas en las columnas A, K y L para agregar una comilla simple delante de los valores que comienzan con un signo igual (=)
+        for row in range(1, sheet.max_row + 1):
+            value_column_A = sheet.cell(row=row, column=1).value
+            if value_column_A and value_column_A.startswith('='):
+                sheet.cell(row=row, column=1).value = "'" + value_column_A
+            
+            value_column_K = sheet.cell(row=row, column=11).value
+            if value_column_K and value_column_K.startswith('='):
+                sheet.cell(row=row, column=11).value = "'" + value_column_K
+            
+            value_column_L = sheet.cell(row=row, column=12).value
+            if value_column_L and value_column_L.startswith('='):
+                sheet.cell(row=row, column=12).value = "'" + value_column_L
 
         ## 1. Detectar filas con 4 o más celdas vacías (si no, a errores)
         for row in range(1, max_row + 1):
