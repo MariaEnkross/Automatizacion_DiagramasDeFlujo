@@ -1,12 +1,10 @@
 # Librerías para la Manipulación de Archivos y Datos
-import sys  
-from io import BytesIO  
-import xlwings as xw  
-import pandas as pd
+import sys
+from io import BytesIO
+import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 import os
-import re
 import shutil
 from PyPDF2 import PdfMerger 
 
@@ -17,7 +15,6 @@ import networkx as nx
 # Librerías para la Interfaz Gráfica
 import customtkinter as ctk  
 from tkinter import filedialog, messagebox 
-from tkinter import Tk, filedialog
 
 """ # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
@@ -48,7 +45,6 @@ def select_file():
         file_entry.insert(0, file_path)
         excel_intermedio(file_path)
 
-# Función para duplicar un archivo Excel
 def excel_intermedio(original_file):
     try:
         # Determinar la ruta para la copia del archivo
@@ -82,9 +78,9 @@ def excel_intermedio(original_file):
                 error_sheet = workbook.create_sheet('errores')
 
                 # Agregar las cabeceras de las columnas
-                error_sheet['A1'] = 'Nombre de la Manguera'
-                error_sheet['B1'] = 'Página dónde se encuentra'
-                error_sheet['C1'] = 'Motivo del error'
+                error_sheet['A1'] = 'Nombre de la Manguera:'
+                error_sheet['B1'] = 'Página dónde se encuentra:'
+                error_sheet['C1'] = 'Motivo del error:'
 
                 # Guardar los cambios en el archivo Excel copiado
                 workbook.save(filename=new_file_path)
@@ -111,10 +107,10 @@ def filtros_excel(file_path):
         # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=file_path)
 
-        # Obtener la hoja activa
+        # Hoja activa
         sheet = workbook.active
 
-        # Obtener el rango de celdas de la hoja
+        # Rango de celdas de la hoja
         max_row = sheet.max_row
         max_column = sheet.max_column
 
@@ -124,18 +120,28 @@ def filtros_excel(file_path):
         elementos_no_encontrados = set()
         interno_error = set()
 
-        # Modificar las celdas en las columnas A, K y L para agregar una comilla simple delante de los valores que comienzan con un signo igual (=)
+        # Modificar las celdas en las columnas A, K y L para asegurarse de reemplazar cualquier comilla simple existente al principio del valor antes de agregar una nueva
         for row in range(1, sheet.max_row + 1):
+            
+            # Columna A
             value_column_A = sheet.cell(row=row, column=1).value
-            if value_column_A and value_column_A.startswith('='):
+            if value_column_A and isinstance(value_column_A, str) and value_column_A.startswith('='):
+                if value_column_A.startswith("'"):
+                    value_column_A = value_column_A[1:]  # Eliminar la comilla simple existente
                 sheet.cell(row=row, column=1).value = "'" + value_column_A
             
+            # Columna K
             value_column_K = sheet.cell(row=row, column=11).value
-            if value_column_K and value_column_K.startswith('='):
+            if value_column_K and isinstance(value_column_K, str) and value_column_K.startswith('='):
+                if value_column_K.startswith("'"):
+                    value_column_K = value_column_K[1:]  # Eliminar la comilla simple existente
                 sheet.cell(row=row, column=11).value = "'" + value_column_K
             
+            # Columna L
             value_column_L = sheet.cell(row=row, column=12).value
-            if value_column_L and value_column_L.startswith('='):
+            if value_column_L and isinstance(value_column_L, str) and value_column_L.startswith('='):
+                if value_column_L.startswith("'"):
+                    value_column_L = value_column_L[1:]  # Eliminar la comilla simple existente
                 sheet.cell(row=row, column=12).value = "'" + value_column_L
 
         ## 1. Detectar filas con 4 o más celdas vacías (si no, a errores)
@@ -279,15 +285,25 @@ def filtros_excel(file_path):
                 else:
                     filas_con_errores.add(row)
 
-        ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC1"
-        for row in range(1, max_row + 1):
+        ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC, CP u OP"
+        for fila in range(1, max_row + 1):
 
-            value_column_B = sheet.cell(row=row, column=2).value
-            value_column_M = sheet.cell(row=row, column=13).value
+            # Obtener los valores de las columnas B y M
+            valor_columna_B = sheet.cell(row=fila, column=2).value
+            valor_columna_M = sheet.cell(row=fila, column=13).value
+            
+            # Verificar si ambos valores no están vacíos y cumplen con los requisitos
+            if valor_columna_B is not None and valor_columna_M is not None:
 
-            # Verificar si ambos valores son "CC1" o "++CP1"
-            if (value_column_B == "++CC1" and value_column_M == "++CC1") or (value_column_B == "++CP1" and value_column_M == "++CP1"):
-                interno_error.add(row)
+                # Eliminar espacios en blanco alrededor de los valores y convertir a mayúsculas para comparar
+                valor_columna_B = valor_columna_B.strip().upper()
+                valor_columna_M = valor_columna_M.strip().upper()
+                
+                # Verificar si los valores comienzan con "CC", "CP" u "OP" y son iguales
+                if valor_columna_B.startswith(("++CC", "++CP", "++OP")) and valor_columna_M.startswith(("++CC", "++CP", "++OP")) and valor_columna_B == valor_columna_M:
+
+                    # Añadir la fila al conjunto de filas con errores
+                    interno_error.add(fila)
 
         ## 6. Agregar saltos de línea en la columna H
         for row in range(1, max_row + 1):
@@ -302,26 +318,17 @@ def filtros_excel(file_path):
                         # Asignar el nuevo valor a la celda
                         cell.value = new_value
 
-        # Verificar si ya existe una hoja llamada 'errores'
+        # Crear hoja llamada 'errores' si no existe
         if 'errores' not in workbook.sheetnames:
             error_sheet = workbook.create_sheet('errores')
 
             # Agregar las cabeceras de las columnas
-            error_sheet['A1'] = 'Nombre de la Manguera'
-            error_sheet['B1'] = 'Motivo del error'
-            error_sheet['C1'] = 'Página donde se encuentra'
+            error_sheet['A1'] = 'Nombre de la Manguera:'
+            error_sheet['B1'] = 'Motivo del error:'
+            error_sheet['C1'] = 'Página dónde se encuentra:'
+
         else:
             error_sheet = workbook['errores']
-
-        # Verificar las cabeceras de columna después de haber creado la hoja o acceder a ella
-        if error_sheet['A1'].value is None:
-            error_sheet['A1'] = 'Nombre de la Manguera'
-
-        if error_sheet['B1'].value is None:
-            error_sheet['B1'] = 'Motivo del error'
-
-        if error_sheet['C1'].value is None:
-            error_sheet['C1'] = 'Página donde se encuentra'
 
         # Mover las filas con errores a la hoja 'errores' (solo nombre Manguera)
         error_row_idx = error_sheet.max_row + 1  # Empezar después de la última fila en la hoja 'errores'
@@ -342,7 +349,8 @@ def filtros_excel(file_path):
                 motivo_error = "Elementos no encontrados en el nombre de la Manguera"
 
             elif row_index in interno_error:
-                motivo_error = "Interno CC1/CP1"
+                value_column_B = sheet.cell(row=row_index, column=2).value
+                motivo_error = f"Manguera interna {value_column_B}"
 
             else:
                 motivo_error = "Error desconocido"
@@ -359,16 +367,12 @@ def filtros_excel(file_path):
 
             error_row_idx += 1
 
-        ## Eliminar las filas que cumplen las condiciones en la hoja original
+        # Eliminar las filas que cumplen las condiciones en la hoja original
         for row_index in sorted(filas_sin_elementos.union(filas_con_errores, interno_error), reverse=True):
             sheet.delete_rows(row_index)
 
         print(f'Los cambios han sido guardados con éxito en {file_path}, puede continuar para generar los Diagramas Unifilares...')
         print() 
-        
-        # Eliminar las filas con errores
-        for row_index in sorted(filas_sin_elementos.union(filas_con_errores), reverse=True):
-            sheet.delete_rows(row_index) 
 
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
