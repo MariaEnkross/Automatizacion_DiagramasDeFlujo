@@ -4,6 +4,7 @@ from io import BytesIO
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
+from openpyxl.utils import get_column_letter
 import os
 import shutil
 from PyPDF2 import PdfMerger 
@@ -108,8 +109,8 @@ def excel_intermedio(original_file):
         # Llamar a la función de filtros_excel
         filtros_excel(new_file_path)
 
-        # # Llamar a la función de filtros_uniones
-        # filtros_uniones(new_file_path)
+        # Llamar a la función de filtros_uniones
+        filtros_uniones(new_file_path)
 
     except Exception as e:
         print(f'Ocurrió un error al crear el excel intermedio: {str(e)}')
@@ -136,30 +137,6 @@ def filtros_excel(file_path):
         elementos_no_encontrados = set()
         interno_error = set()
 
-        # Modificar las celdas en las columnas A, K y L para asegurarse de reemplazar cualquier comilla simple existente al principio del valor antes de agregar una nueva
-        for row in range(1, sheet.max_row + 1):
-
-            # Columna A
-            value_column_A = sheet.cell(row=row, column=1).value
-            if value_column_A and isinstance(value_column_A, str) and value_column_A.startswith('='):
-                if value_column_A.startswith("'"):
-                    value_column_A = value_column_A[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=1).value = "'" + value_column_A
-            
-            # Columna K
-            value_column_K = sheet.cell(row=row, column=11).value
-            if value_column_K and isinstance(value_column_K, str) and value_column_K.startswith('='):
-                if value_column_K.startswith("'"):
-                    value_column_K = value_column_K[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=11).value = "'" + value_column_K
-            
-            # Columna L
-            value_column_L = sheet.cell(row=row, column=12).value
-            if value_column_L and isinstance(value_column_L, str) and value_column_L.startswith('='):
-                if value_column_L.startswith("'"):
-                    value_column_L = value_column_L[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=12).value = "'" + value_column_L
-
         ## 1. Detectar filas con 4 o más celdas vacías (si no, a errores)
         for row in range(1, max_row + 1):
             empty_cell_count = 0
@@ -175,7 +152,6 @@ def filtros_excel(file_path):
                     filas_sin_elementos.add(row)
                     break  # Salir del bucle si hay 4 o más celdas vacías seguidas
 
-
         ## 2. Eliminar -W en columnas D y O (si no coincide, a errores)
         for row in range(1, sheet.max_row + 1):
 
@@ -187,15 +163,17 @@ def filtros_excel(file_path):
                 values_D = cell_value_D.split()  # Dividir los valores de la celda en la columna D
 
                 if values_D:  
-                            
-                    first_value = values_D[0].strip()  # Conservar solo el primer valor
+                    first_value_D = None  # Variable temporal para almacenar el primer valor
 
-                    # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
-                    if first_value.startswith("-W"):
-                                elementos_no_encontrados.add(row)
+                    for value in values_D:
+                        if not value.startswith("-W"):
+                            first_value_D = value
+                            break
 
-            # Actualizar la celda en la columna D con el primer valor
-            sheet.cell(row=row, column=4).value = first_value            
+                    if first_value_D is not None:
+                        sheet.cell(row=row, column=4).value = first_value_D  # Actualizar la celda en la columna D
+                    else:
+                        elementos_no_encontrados.add(row)            
 
             # Procesar la columna O
             cell_value_O = sheet.cell(row=row, column=15).value
@@ -205,15 +183,17 @@ def filtros_excel(file_path):
                 values_O = cell_value_O.split() # Dividir los valores de la celda en la columna O
 
                 if values_O:  
-                            
-                    first_value = values_O[0].strip() # Conservar solo el primer valor
+                    first_value_O = None  # Variable temporal para almacenar el primer valor
 
-                    # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
-                    if first_value.startswith("-W"):
+                    for value in values_O:
+                        if not value.startswith("-W"):
+                            first_value_O = value
+                            break
+
+                    if first_value_O is not None:
+                        sheet.cell(row=row, column=15).value = first_value_O  # Actualizar la celda en la columna O
+                    else:
                         elementos_no_encontrados.add(row)
-
-                    # Actualizar la celda en la columna O con el primer valor
-                    sheet.cell(row=row, column=15).value = first_value
 
         
         ## 3. Eliminar duplicados en las columnas A, B, C, D y L, M, N, O
@@ -222,84 +202,89 @@ def filtros_excel(file_path):
                 value_column = sheet.cell(row=row, column=column_index_from_string(column_letter)).value
                 if value_column:
                     values = value_column.split()
-                    unique_values = list(set(values))
+                    unique_values = []
+                    for value in values:
+                        if value not in unique_values:
+                            unique_values.append(value)
                     sheet.cell(row=row, column=column_index_from_string(column_letter)).value = ' '.join(unique_values)
 
 
-        ## 4. Comprobar contenido de las celdas de las columnas B, C, D y M, N, O con la columna H (si no, a errores)
+        ## 4. Comprobar contenido de las celdas de las columnas B, C, D, M, N, O con la columna H (si no, a errores)
         for row in range(1, sheet.max_row + 1):
+            # Obtener el valor de la columna H y dividirlo por "/"
+            value_column_H = sheet.cell(row=row, column=8).value
+            if value_column_H and "/" in value_column_H:
+                split_values_H = value_column_H.split("/")
 
-            # Procesar la columna B
-            value_column_B = sheet.cell(row=row, column=2).value
-            if value_column_B:
-                for subvalue in value_column_B.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[0]:  # Verificar si está antes de la barra en la columna F
+                # Procesar la columna B
+                value_column_B = sheet.cell(row=row, column=2).value
+                if value_column_B:
+                    for subvalue in value_column_B.split():
+                        if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=2).value = subvalue
                             break
-                else:
-                    filas_con_errores.add(row)
+                    else:
+                        filas_con_errores.add(row)
 
-            # Procesar la columna C
-            value_column_C = sheet.cell(row=row, column=3).value
-            if value_column_C:
-                for subvalue in value_column_C.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[0]:  # Verificar si está antes de la barra en la columna F
+                # Procesar la columna C
+                value_column_C = sheet.cell(row=row, column=3).value
+                if value_column_C:
+                    for subvalue in value_column_C.split():
+                        if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=3).value = subvalue
                             break
+                    else:
+                        filas_con_errores.add(row)
+
+                # Obtener el valor de la columna H y dividirlo por "/"
+                value_column_H = sheet.cell(row=row, column=8).value
+                if value_column_H and "/" in value_column_H:
+                    split_values_H = value_column_H.split("/")
+
+                    # Obtener el valor de la columna D
+                    value_column_D = sheet.cell(row=row, column=4).value
+                    if value_column_D:
+                        for subvalue in value_column_D.split():
+                            if subvalue in split_values_H[0]:
+                                sheet.cell(row=row, column=4).value = subvalue
+                                break
+                        else:
+                            filas_con_errores.add(row)
                 else:
                     filas_con_errores.add(row)
 
-            # Procesar la columna D
-            value_column_D = sheet.cell(row=row, column=4).value
-            if value_column_D:
-                for subvalue in value_column_D.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[0]:  # Verificar si está antes de la barra en la columna F
-                            sheet.cell(row=row, column=4).value = subvalue
-                            break
-                else:
-                    filas_con_errores.add(row)
-
-            # Procesar la columna M
-            value_column_M = sheet.cell(row=row, column=13).value
-            if value_column_M:
-                for subvalue in value_column_M.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[1]:  # Verificar si está antes de la barra en la columna F
+                # Procesar la columna M
+                value_column_M = sheet.cell(row=row, column=13).value
+                if value_column_M:
+                    for subvalue in value_column_M.split():
+                        if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=13).value = subvalue
                             break
-                else:
-                    filas_con_errores.add(row)
+                    else:
+                        filas_con_errores.add(row)
 
-            # Procesar la columna N
-            value_column_N = sheet.cell(row=row, column=14).value
-            if value_column_N:
-                for subvalue in value_column_N.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[1]:  # Verificar si está antes de la barra en la columna F
+                # Procesar la columna N
+                value_column_N = sheet.cell(row=row, column=14).value
+                if value_column_N:
+                    for subvalue in value_column_N.split():
+                        if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=14).value = subvalue
                             break
-                else:
-                    filas_con_errores.add(row)
+                    else:
+                        filas_con_errores.add(row)
 
-            # Procesar la columna O
-            value_column_O = sheet.cell(row=row, column=15).value
-            if value_column_O:
-                for subvalue in value_column_O.split():  # Verificar cada subvalor del valor de la columna B
-                    if "/" in sheet.cell(row=row, column=8).value:
-                        split_values_F = sheet.cell(row=row, column=8).value.split("/")
-                        if len(split_values_F) > 0 and subvalue in split_values_F[1]:  # Verificar si está antes de la barra en la columna F
+                # Procesar la columna O
+                value_column_O = sheet.cell(row=row, column=15).value
+                if value_column_O:
+                    for subvalue in value_column_O.split():
+                        if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=15).value = subvalue
                             break
-                else:
-                    filas_con_errores.add(row)
+                    else:
+                        filas_con_errores.add(row)
+            else:
+                filas_con_errores.add(row)
+
 
         ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC, CP u OP"
         for row in range(1, max_row + 1):
@@ -322,17 +307,40 @@ def filtros_excel(file_path):
                     interno_error.add(row)
 
         ## 6. Agregar saltos de línea en la columna H
-        for row in range(1, max_row + 1):
-                    cell = sheet.cell(row=row, column=8)
-                    value = cell.value
+        for row in range(1, sheet.max_row + 1):
+            cell = sheet.cell(row=row, column=8)  # Columna H
+            value = cell.value
 
-                    if value and isinstance(value, str):
+            if value and isinstance(value, str):
+                # Reemplazar "/ " por "/\n"
+                new_value = value.replace("/", "/\n")
 
-                        # Reemplazar "/ " por "/\n"
-                        new_value = value.replace("/", "/\n")
+                # Asignar el nuevo valor a la celda
+                cell.value = new_value
 
-                        # Asignar el nuevo valor a la celda
-                        cell.value = new_value
+        ## 7. Comillas simples
+        for row in range(1, sheet.max_row + 1):
+
+            # Columna A
+            value_column_A = sheet.cell(row=row, column=1).value
+            if value_column_A and isinstance(value_column_A, str) and value_column_A.startswith('='):
+                if value_column_A.startswith("'"):
+                    value_column_A = value_column_A[1:]  # Eliminar la comilla simple existente
+                sheet.cell(row=row, column=1).value = "'" + value_column_A
+            
+            # Columna K
+            value_column_K = sheet.cell(row=row, column=11).value
+            if value_column_K and isinstance(value_column_K, str) and value_column_K.startswith('='):
+                if value_column_K.startswith("'"):
+                    value_column_K = value_column_K[1:]  # Eliminar la comilla simple existente
+                sheet.cell(row=row, column=11).value = "'" + value_column_K
+            
+            # Columna L
+            value_column_L = sheet.cell(row=row, column=12).value
+            if value_column_L and isinstance(value_column_L, str) and value_column_L.startswith('='):
+                if value_column_L.startswith("'"):
+                    value_column_L = value_column_L[1:]  # Eliminar la comilla simple existente
+                sheet.cell(row=row, column=12).value = "'" + value_column_L
 
         # Crear hoja llamada 'errores' si no existe
         if 'errores' not in workbook.sheetnames:
@@ -393,19 +401,92 @@ def filtros_excel(file_path):
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
 
-        # Mostrar mensaje de confirmación si se sobrescribe el archivo
-        messagebox.showinfo("Información", "Se han guardado los cambios en la copia del archivo.")
-
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
 
-""" def filtros_uniones(file_path):
-
+def filtros_uniones(file_path):
     try:
+        # Cargar el archivo Excel copiado
+        workbook = load_workbook(filename=file_path)
 
+        # Obtener la hoja activa y las hojas 'uniones'
+        sheet = workbook.active
+        
+        if 'uniones' not in workbook.sheetnames:
+            union_sheet = workbook.create_sheet('uniones')
+        else:
+            union_sheet = workbook['uniones']
+
+        # Inicializar el índice de la fila para la hoja 'uniones'
+        union_row_idx = 1
+
+        # Iterar por las filas de la hoja activa
+        for row in range(1, sheet.max_row + 1):
+
+            # Unir los valores de las columnas A, B, C, D, F, G en una sola cadena
+            value_A = sheet.cell(row=row, column=1).value or ""
+            value_B = sheet.cell(row=row, column=2).value or ""
+            value_C = sheet.cell(row=row, column=3).value or ""
+            value_D = sheet.cell(row=row, column=4).value or ""
+            value_F = sheet.cell(row=row, column=6).value or ""
+            value_G = sheet.cell(row=row, column=7).value or ""
+
+            # Unir los valores de las columnas H, I, y J en una sola cadena
+            value_H = sheet.cell(row=row, column=8).value or ""
+            value_I = sheet.cell(row=row, column=9).value or ""
+            value_J = sheet.cell(row=row, column=10).value or ""
+
+            # Unir los valores de las columnas L, M, N, O, Q, R en una sola cadena
+            value_L = sheet.cell(row=row, column=12).value or ""
+            value_M = sheet.cell(row=row, column=13).value or ""
+            value_N = sheet.cell(row=row, column=14).value or ""
+            value_O = sheet.cell(row=row, column=15).value or ""
+            value_Q = sheet.cell(row=row, column=17).value or ""
+            value_R = sheet.cell(row=row, column=18).value or ""
+
+            # Escribir los valores en la hoja 'uniones' en las columnas A, B y C respectivamente
+            union_sheet.cell(row=union_row_idx, column=1).value = f"{value_A}{value_B} \n {value_C}{value_D} \n {value_F} \n {value_G}"
+            union_sheet.cell(row=union_row_idx, column=2).value = f"{value_H} \n {value_I} \n {value_J}"
+            union_sheet.cell(row=union_row_idx, column=3).value = f"{value_L}{value_M} \n {value_N}{value_O} \n {value_Q} \n {value_R}"
+
+            union_row_idx += 1
+
+        ## Union sobre las filas ##
+        # Leer todas las filas en la hoja 'uniones'
+        data = []
+        for row in union_sheet.iter_rows(values_only=True):
+            data.append(list(row))
+
+        # Inicializar una nueva lista para almacenar las filas unidas
+        merged_data = []
+
+        # Realizar las uniones según las reglas
+        i = 0
+        while i < len(data):
+            current_row = data[i]
+            j = i + 1
+            while j < len(data):
+                next_row = data[j]
+                if current_row[-1] == next_row[0]:
+                    current_row.extend(next_row[1:])
+                    data.pop(j)
+                else:
+                    j += 1
+            merged_data.append(current_row)
+            i += 1
+
+        # Limpiar cualquier dato existente en la hoja 'uniones'
+        union_sheet.delete_rows(1, union_sheet.max_row)
+
+        # Escribir las filas unidas de nuevo en la hoja 'uniones'
+        for row in merged_data:
+            union_sheet.append(row)
+
+        # Guardar los cambios en el archivo Excel copiado
+        workbook.save(filename=file_path)
 
     except Exception as e:
-        print(f'Ocurrió un error al crear las uniones del Excel: {str(e)}') """
+        print(f'Ocurrió un error al crear las uniones del Excel: {str(e)}')
 
 # Función para procesar el archivo seleccionado
 def process_file():
@@ -574,8 +655,8 @@ file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
 ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
-# Botón 'Generar PDF'
-ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, padx=10, pady=10)
+""" # Botón 'Generar PDF'
+ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, padx=10, pady=10) """
 
 # Botón 'Tamaño hoja'
 ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)
