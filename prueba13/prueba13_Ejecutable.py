@@ -10,9 +10,9 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 
-# Ocultar la CMD de Windows al ejecutar el .exe
+""" # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)
+win32gui.ShowWindow(hide, win32con.SW_HIDE) """
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:

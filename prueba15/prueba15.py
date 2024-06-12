@@ -8,14 +8,15 @@ import xlwings as xw
 import win32gui, win32con
 from PyPDF2 import PdfMerger
 import customtkinter as ctk
+import tkinter as tk
 from tkinter import filedialog, messagebox
 from langdetect import detect
 from PIL import Image, ImageTk
 import os
 
-# Ocultar la CMD de Windows al ejecutar el .exe
+""" # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide, win32con.SW_HIDE)
+win32gui.ShowWindow(hide, win32con.SW_HIDE) """
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
@@ -31,7 +32,7 @@ class RedirectStdout:
 
 # Función que muestra una ventana emergente con un ícono de advertencia
 def show_warning(message):
-    ctk.messagebox.showwarning("Advertencia", message)
+    tk.messagebox.showwarning("Advertencia", message)
 
 # Función para seleccionar un archivo Excel
 def select_file():

@@ -163,15 +163,15 @@ def filtros_excel(file_path):
                     sheet.cell(row=row, column=4).value = first_value
 
             # Procesar la columna J
-            cell_value_D = sheet.cell(row=row, column=10).value
+            cell_value_J = sheet.cell(row=row, column=10).value
 
-            if cell_value_D:  # Verificar si hay un valor en la columna D
+            if cell_value_J:  # Verificar si hay un valor en la columna J
                 
-                values_D = cell_value_D.split() # Dividir los valores de la celda en la columna D
+                values_J = cell_value_J.split() # Dividir los valores de la celda en la columna J
 
-                if values_D:  
+                if values_J:  
                     
-                    first_value = values_D[0].strip() # Conservar solo el primer valor
+                    first_value = values_J[0].strip() # Conservar solo el primer valor
 
                     # Si el primer valor empieza por "-W", mover la fila a la hoja de errores
                     if first_value.startswith("-W"):
@@ -330,9 +330,14 @@ def filtros_excel(file_path):
         # Eliminar las filas con errores
         for row_index in sorted(filas_sin_elementos.union(filas_con_errores), reverse=True):
             sheet.delete_rows(row_index)
+        
+        """ # Eliminar filas con errores al final del proceso
+        for row in filas_sin_elementos | filas_con_errores | elementos_no_encontrados:
+            sheet.delete_rows(row, 1) """ 
 
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
+        workbook.close()
 
         # Mostrar mensaje de confirmación si se sobrescribe el archivo
         messagebox.showinfo("Información", "Se han guardado los cambios en la copia del archivo.")
@@ -422,7 +427,7 @@ def process_file():
     # Guardar el archivo PDF combinado
     save_combined_pdf(pdf_merger)
 
-    # Borrar el archivo intermedio
+    # Eliminar el archivo Excel copiado
     os.remove(file_path)
 
     # Cerrar el libro de Excel

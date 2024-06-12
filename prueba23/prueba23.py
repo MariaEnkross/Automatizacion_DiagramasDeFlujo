@@ -111,22 +111,6 @@ def filtros_excel(file_path):
         filas_con_errores = set()
         elementos_no_encontrados = set()
 
-        ## Reemplazar "/" por "/ + \n" (saltos de linea) en la columna F
-        for row in range(1, max_row + 1):
-                    cell = sheet.cell(row=row, column=6)
-                    value = cell.value
-
-                    if value and isinstance(value, str):
-
-                        # Reemplazar "/ " por "/\n"
-                        new_value = value.replace("/", "/\n")
-
-                        # Asignar el nuevo valor a la celda
-                        cell.value = new_value
-
-        print(f'Se han creado los saltos de línea correctamente')
-        print()
-
         ## 1. Detectar filas con 4 o más celdas vacías (si no, a errores)
         for row in range(1, max_row + 1):
             empty_cell_count = 0
@@ -281,6 +265,25 @@ def filtros_excel(file_path):
                 sheet.cell(row=row, column=7).value = ' '.join(unique_values_G)
 
         print(f'Se han eliminado los duplicados correctamente')
+        print()
+
+        ## 5. Internas CC1
+        
+
+        ## 6. Agregar saltos de línea en la columna F
+        for row in range(1, max_row + 1):
+                    cell = sheet.cell(row=row, column=6)
+                    value = cell.value
+
+                    if value and isinstance(value, str):
+
+                        # Reemplazar "/ " por "/\n"
+                        new_value = value.replace("/", "/\n")
+
+                        # Asignar el nuevo valor a la celda
+                        cell.value = new_value
+
+        print(f'Se han creado los saltos de línea correctamente')
         print()
         
         # Verificar si ya existe una hoja llamada 'errores'
