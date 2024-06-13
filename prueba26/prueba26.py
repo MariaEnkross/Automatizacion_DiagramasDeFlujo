@@ -4,7 +4,7 @@ from io import BytesIO
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import numbers
 import os
 import shutil
 from PyPDF2 import PdfMerger 
@@ -159,10 +159,9 @@ def filtros_excel(file_path):
             cell_value_D = sheet.cell(row=row, column=4).value
 
             if cell_value_D:  # Verificar si hay un valor en la columna D
-                        
                 values_D = cell_value_D.split()  # Dividir los valores de la celda en la columna D
 
-                if values_D:  
+                if values_D:
                     first_value_D = None  # Variable temporal para almacenar el primer valor
 
                     for value in values_D:
@@ -171,18 +170,17 @@ def filtros_excel(file_path):
                             break
 
                     if first_value_D is not None:
-                        sheet.cell(row=row, column=4).value = first_value_D  # Actualizar la celda en la columna D
+                        sheet.cell(row=row, column=4).value = first_value_D  # Actualizar la celda en la columna D solo si es necesario
                     else:
-                        elementos_no_encontrados.add(row)            
+                        elementos_no_encontrados.add(row)
 
             # Procesar la columna O
             cell_value_O = sheet.cell(row=row, column=15).value
 
             if cell_value_O:  # Verificar si hay un valor en la columna O
-                        
                 values_O = cell_value_O.split() # Dividir los valores de la celda en la columna O
 
-                if values_O:  
+                if values_O:
                     first_value_O = None  # Variable temporal para almacenar el primer valor
 
                     for value in values_O:
@@ -191,7 +189,7 @@ def filtros_excel(file_path):
                             break
 
                     if first_value_O is not None:
-                        sheet.cell(row=row, column=15).value = first_value_O  # Actualizar la celda en la columna O
+                        sheet.cell(row=row, column=15).value = first_value_O  # Actualizar la celda en la columna O solo si es necesario
                     else:
                         elementos_no_encontrados.add(row)
 
@@ -211,7 +209,6 @@ def filtros_excel(file_path):
 
         ## 4. Comprobar contenido de las celdas de las columnas B, C, D, M, N, O con la columna H (si no, a errores)
         for row in range(1, sheet.max_row + 1):
-            # Obtener el valor de la columna H y dividirlo por "/"
             value_column_H = sheet.cell(row=row, column=8).value
             if value_column_H and "/" in value_column_H:
                 split_values_H = value_column_H.split("/")
@@ -219,72 +216,77 @@ def filtros_excel(file_path):
                 # Procesar la columna B
                 value_column_B = sheet.cell(row=row, column=2).value
                 if value_column_B:
+                    updated_B = False
                     for subvalue in value_column_B.split():
                         if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=2).value = subvalue
+                            updated_B = True
                             break
-                    else:
+                    if not updated_B:
                         filas_con_errores.add(row)
 
                 # Procesar la columna C
                 value_column_C = sheet.cell(row=row, column=3).value
                 if value_column_C:
+                    updated_C = False
                     for subvalue in value_column_C.split():
                         if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=3).value = subvalue
+                            updated_C = True
                             break
-                    else:
+                    if not updated_C:
                         filas_con_errores.add(row)
 
-                # Obtener el valor de la columna H y dividirlo por "/"
-                value_column_H = sheet.cell(row=row, column=8).value
-                if value_column_H and "/" in value_column_H:
-                    split_values_H = value_column_H.split("/")
-
-                    # Obtener el valor de la columna D
-                    value_column_D = sheet.cell(row=row, column=4).value
-                    if value_column_D:
-                        for subvalue in value_column_D.split():
-                            if subvalue in split_values_H[0]:
-                                sheet.cell(row=row, column=4).value = subvalue
-                                break
-                        else:
-                            filas_con_errores.add(row)
-                else:
-                    filas_con_errores.add(row)
+                # Procesar la columna D
+                value_column_D = sheet.cell(row=row, column=4).value
+                if value_column_D:
+                    updated_D = False
+                    for subvalue in value_column_D.split():
+                        if subvalue in split_values_H[0]:
+                            sheet.cell(row=row, column=4).value = subvalue
+                            updated_D = True
+                            break
+                    if not updated_D:
+                        filas_con_errores.add(row)
 
                 # Procesar la columna M
                 value_column_M = sheet.cell(row=row, column=13).value
                 if value_column_M:
+                    updated_M = False
                     for subvalue in value_column_M.split():
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=13).value = subvalue
+                            updated_M = True
                             break
-                    else:
+                    if not updated_M:
                         filas_con_errores.add(row)
 
                 # Procesar la columna N
                 value_column_N = sheet.cell(row=row, column=14).value
                 if value_column_N:
+                    updated_N = False
                     for subvalue in value_column_N.split():
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=14).value = subvalue
+                            updated_N = True
                             break
-                    else:
+                    if not updated_N:
                         filas_con_errores.add(row)
 
                 # Procesar la columna O
                 value_column_O = sheet.cell(row=row, column=15).value
                 if value_column_O:
+                    updated_O = False
                     for subvalue in value_column_O.split():
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=15).value = subvalue
+                            updated_O = True
                             break
-                    else:
+                    if not updated_O:
                         filas_con_errores.add(row)
+
             else:
                 filas_con_errores.add(row)
-
 
         ## 5. Comprobar si las columnas B y M tienen el mismo valor "CC, CP u OP"
         for row in range(1, max_row + 1):
@@ -318,29 +320,14 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        ## 7. Comillas simples
-        for row in range(1, sheet.max_row + 1):
+        # Error en los iguales (=)
+        columns_to_process = [1, 8, 11, 12]  # Columnas A, H, K, L
 
-            # Columna A
-            value_column_A = sheet.cell(row=row, column=1).value
-            if value_column_A and isinstance(value_column_A, str) and value_column_A.startswith('='):
-                if value_column_A.startswith("'"):
-                    value_column_A = value_column_A[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=1).value = "'" + value_column_A
-            
-            # Columna K
-            value_column_K = sheet.cell(row=row, column=11).value
-            if value_column_K and isinstance(value_column_K, str) and value_column_K.startswith('='):
-                if value_column_K.startswith("'"):
-                    value_column_K = value_column_K[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=11).value = "'" + value_column_K
-            
-            # Columna L
-            value_column_L = sheet.cell(row=row, column=12).value
-            if value_column_L and isinstance(value_column_L, str) and value_column_L.startswith('='):
-                if value_column_L.startswith("'"):
-                    value_column_L = value_column_L[1:]  # Eliminar la comilla simple existente
-                sheet.cell(row=row, column=12).value = "'" + value_column_L
+        for row in range(1, sheet.max_row + 1):
+            for col in columns_to_process:
+                cell_value = sheet.cell(row=row, column=col).value
+                if isinstance(cell_value, str) and cell_value.startswith('='):
+                    sheet.cell(row=row, column=col).value = cell_value.lstrip('=')
 
         # Crear hoja llamada 'errores' si no existe
         if 'errores' not in workbook.sheetnames:
@@ -404,6 +391,7 @@ def filtros_excel(file_path):
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
 
+
 def filtros_uniones(file_path):
     try:
         # Cargar el archivo Excel copiado
@@ -444,6 +432,12 @@ def filtros_uniones(file_path):
             value_Q = sheet.cell(row=row, column=17).value or ""
             value_R = sheet.cell(row=row, column=18).value or ""
 
+            # Añadir "=" al principio de las cadenas concatenadas de las columnas A y L
+            if value_A:
+                value_A = f"={value_A}"
+            if value_L:
+                value_L = f"={value_L}"
+
             # Escribir los valores en la hoja 'uniones' en las columnas A, B y C respectivamente
             union_sheet.cell(row=union_row_idx, column=1).value = f"{value_A}{value_B} \n {value_C}{value_D} \n {value_F} \n {value_G}"
             union_sheet.cell(row=union_row_idx, column=2).value = f"{value_H} \n {value_I} \n {value_J}"
@@ -452,8 +446,8 @@ def filtros_uniones(file_path):
             union_row_idx += 1
 
         ## Union sobre las filas ##
-        # Leer todas las filas en la hoja 'uniones'
-        data = []
+        data = [] # Leer todas las filas en la hoja 'uniones'
+
         for row in union_sheet.iter_rows(values_only=True):
             data.append(list(row))
 
@@ -462,16 +456,21 @@ def filtros_uniones(file_path):
 
         # Realizar las uniones según las reglas
         i = 0
-        while i < len(data):
-            current_row = data[i]
-            j = i + 1
+        while i < len(data): # Mientras haya fila de datos
+
+            current_row = data[i] # Fila actual con indice i
+            j = i + 1 # Fila siguiente, variable j
+
             while j < len(data):
-                next_row = data[j]
+                next_row = data[j] # Selecciona siguiente fila para comparar a la actual
+
                 if current_row[-1] == next_row[0]:
                     current_row.extend(next_row[1:])
                     data.pop(j)
-                else:
+
+                else: 
                     j += 1
+
             merged_data.append(current_row)
             i += 1
 
