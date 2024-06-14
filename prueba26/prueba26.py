@@ -320,7 +320,7 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        # Error en los iguales (=)
+        # Eliminar el prefijo "=" de las celdas en las columnas específicas
         columns_to_process = [1, 8, 11, 12]  # Columnas A, H, K, L
 
         for row in range(1, sheet.max_row + 1):
@@ -391,7 +391,6 @@ def filtros_excel(file_path):
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
 
-
 def filtros_uniones(file_path):
     try:
         # Cargar el archivo Excel copiado
@@ -432,16 +431,20 @@ def filtros_uniones(file_path):
             value_Q = sheet.cell(row=row, column=17).value or ""
             value_R = sheet.cell(row=row, column=18).value or ""
 
-            # Añadir "=" al principio de las cadenas concatenadas de las columnas A y L
+            """ # Añadir "=" al principio de las cadenas concatenadas de las columnas A y L
             if value_A:
-                value_A = f"={value_A}"
+                value_A = f"'={value_A}"
             if value_L:
-                value_L = f"={value_L}"
+                value_L = f"'={value_L}" """
 
             # Escribir los valores en la hoja 'uniones' en las columnas A, B y C respectivamente
             union_sheet.cell(row=union_row_idx, column=1).value = f"{value_A}{value_B} \n {value_C}{value_D} \n {value_F} \n {value_G}"
             union_sheet.cell(row=union_row_idx, column=2).value = f"{value_H} \n {value_I} \n {value_J}"
             union_sheet.cell(row=union_row_idx, column=3).value = f"{value_L}{value_M} \n {value_N}{value_O} \n {value_Q} \n {value_R}"
+
+            """ # Formatear celdas como texto para evitar que Excel interprete incorrectamente las fórmulas
+            union_sheet.cell(row=union_row_idx, column=1).number_format = numbers.FORMAT_TEXT
+            union_sheet.cell(row=union_row_idx, column=3).number_format = numbers.FORMAT_TEXT """
 
             union_row_idx += 1
 

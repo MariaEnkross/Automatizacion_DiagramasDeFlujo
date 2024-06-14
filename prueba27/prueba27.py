@@ -4,7 +4,6 @@ from io import BytesIO
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
-from openpyxl.styles import numbers
 import os
 import shutil
 from PyPDF2 import PdfMerger 
@@ -12,10 +11,15 @@ from PyPDF2 import PdfMerger
 # Librerías para la Creación y Manipulación de Gráficos
 import matplotlib.pyplot as plt  
 import networkx as nx  
+from reportlab.lib.pagesizes import A4, A3
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 # Librerías para la Interfaz Gráfica
 import customtkinter as ctk  
 from tkinter import filedialog, messagebox 
+
 
 """ # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
@@ -23,6 +27,7 @@ win32gui.ShowWindow(hide, win32con.SW_HIDE) """
 
 # Clase para redirigir stdout a un widget Text de Tkinter
 class RedirectStdout:
+
     def __init__(self, text_widget):
         self.text_widget = text_widget
 
@@ -33,11 +38,13 @@ class RedirectStdout:
     def flush(self):
         pass
 
+
 # Función para seleccionar un archivo Excel
 def select_file():
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
 
     if not file_path:
+        
         print("No se seleccionó ningún archivo. El programa se cerrará.")
         return
     
@@ -46,6 +53,7 @@ def select_file():
         file_entry.insert(0, file_path)
 
         excel_intermedio(file_path)
+
 
 def excel_intermedio(original_file):
     try:
@@ -57,8 +65,10 @@ def excel_intermedio(original_file):
         # Verificar si ya existe una copia del archivo
         if os.path.exists(new_file_path):
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
+
             if not overwrite_confirmation:
                 print("Operación cancelada por el usuario.")
+
                 return
 
         # Copiar el archivo Excel original a la nueva ubicación
@@ -69,7 +79,6 @@ def excel_intermedio(original_file):
 
         # Función para crear la hoja de errores en el archivo Excel copiado
         def hoja_errores(workbook):
-            try:
 
                 # Crear hoja llamada 'errores'
                 error_sheet = workbook.create_sheet('errores')
@@ -82,23 +91,15 @@ def excel_intermedio(original_file):
                 # Guardar los cambios en el archivo Excel copiado
                 workbook.save(filename=new_file_path)
             
-            except Exception as e:
-                print(f'Ocurrió un error al crear la hoja de errores')
-                print()
-
         # Función para crear la hoja de uniones en el archivo Excel copiado
         def hoja_uniones(workbook):
-            try:
 
                 # Crear hoja llamada 'uniones'
                 union_sheet = workbook.create_sheet('uniones')
 
                 # Guardar los cambios en el archivo Excel copiado
                 workbook.save(filename=new_file_path)
-            
-            except Exception as e:
-                print(f'Ocurrió un error al crear la hoja de uniones')
-                print()
+
 
         # Llamar a la función para crear la hoja de errores
         hoja_errores(workbook)
@@ -117,6 +118,7 @@ def excel_intermedio(original_file):
 
         return []
     
+
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
 
@@ -320,12 +322,14 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        # Eliminar el prefijo "=" de las celdas en las columnas específicas
-        columns_to_process = [1, 8, 11, 12]  # Columnas A, H, K, L
+        # Eliminar el "=" de las celdas en: Columnas A, H, K, L
+        columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):
+            
             for col in columns_to_process:
                 cell_value = sheet.cell(row=row, column=col).value
+
                 if isinstance(cell_value, str) and cell_value.startswith('='):
                     sheet.cell(row=row, column=col).value = cell_value.lstrip('=')
 
@@ -390,6 +394,7 @@ def filtros_excel(file_path):
 
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
+
 
 def filtros_uniones(file_path):
     try:
@@ -487,6 +492,7 @@ def filtros_uniones(file_path):
     except Exception as e:
         print(f'Ocurrió un error al crear las uniones del Excel: {str(e)}')
 
+
 # Función para procesar el archivo seleccionado
 def process_file():
 
@@ -564,6 +570,7 @@ def process_file():
     for pdf_file in pdf_files:
         pdf_file.close()
 
+
 # Función para obtener el tamaño de la figura y la posición máxima en X
 def get_figsize_and_max_pos(tamaño_hoja):
     
@@ -571,6 +578,7 @@ def get_figsize_and_max_pos(tamaño_hoja):
         return (210 / 25.4, 297 / 25.4), 4 # Tamaño A4
     else:                   
         return (420 / 25.4, 297 / 25.4), 8 # Tamaño A3
+
 
 # Función para crear un grafo a partir de una fila
 def create_graph_from_row(row):
@@ -588,6 +596,7 @@ def create_graph_from_row(row):
         if row[i] is not None and row[i + 1] is not None:  # Verificar que los valores no son None
             G.add_edge(row[i], row[i + 1])
     return G
+
 
 # Función para generar posiciones de los nodos
 def generate_positions(G, x_position_max):
@@ -607,26 +616,66 @@ def generate_positions(G, x_position_max):
 
     return pos
 
-# Función para dibujar el grafo
+
+# Función para dibujar los nodos del grafo
 def draw_graph(G, pos, ax):
 
-    # Dibujar los nodos
     node_colors = ['skyblue' if i % 2 == 0 else 'lightgreen' for i in range(len(G.nodes))]
     node_shapes = ['s' if i % 2 == 0 else 'd' for i in range(len(G.nodes))]
 
-    for i, (node, (x, y)) in enumerate(pos.items()): # "pos.items()" devuelve una vista de los elementos (clave, valor) de "pos".
+    for i, (node, (x, y)) in enumerate(pos.items()):
 
-        """ # Añadir '=' delante del texto del primer valor si es cuadrado azul
-        if i % 2 == 0:
-            node_label = '=' + str(node)
+        # Si el nodo es un cuadrado azul y no tiene un '=', se añade
+        if node_shapes[i] == 's' and node_colors[i] == 'skyblue' and not str(node).startswith('='):
+            labeled_node = '=' + str(node)
+
         else:
-            node_label = str(node) """
-        
+            labeled_node = str(node)
+
+        # Dibujar el nodo con sus atributos
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
-        ax.text(x, y, node, ha='center', va='center')
+        
+        # Añadir el texto del nodo, usando labeled_node
+        ax.text(x, y, labeled_node, ha='center', va='center')
 
     nx.draw_networkx_edges(G, pos)
-    ax.axis('off') 
+    ax.axis('off')
+
+
+def tabla_errores(excel_path):
+
+    # Leer los datos de la hoja "errores" del Excel
+    workbook = load_workbook(filename=excel_path)
+    sheet = workbook['errores']
+
+    # Crear el PDF usando reportlab
+    pdf_buffer = BytesIO()
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+    elements = []
+
+    # Estilos para el PDF
+    styles = getSampleStyleSheet()
+    styleN = styles["BodyText"]
+    styleN.alignment = 1  # Center alignment
+
+    # Crear la tabla de errores
+    data = []
+    for row in sheet.iter_rows(values_only=True):
+        data.append(list(row))
+    
+    # Crear la tabla usando reportlab
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
 
 # Función para guardar el archivo PDF combinado
 def save_combined_pdf(pdf_merger):
@@ -643,7 +692,6 @@ def save_combined_pdf(pdf_merger):
         pdf_merger.close()  # Cerrar el PdfMerger para liberar recursos
 
         # Mensaje de Información al finalizar el proceso
-        print(f"El archivo PDF se ha guardado correctamente en: {pdf_combined_file}")
         ctk.messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
 
