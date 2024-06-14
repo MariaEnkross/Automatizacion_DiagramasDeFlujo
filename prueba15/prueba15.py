@@ -222,9 +222,9 @@ def generate_positions(G, x_position_max):
 
     return pos
 
+# Función para dibujar los nodos
 def draw_graph(G, pos, ax):
 
-    # Dibujar los nodos
     node_colors = ['skyblue' if i % 2 == 0 else 'lightgreen' for i in range(len(G.nodes))]
     node_shapes = ['s' if i % 2 == 0 else 'd' for i in range(len(G.nodes))]
 
@@ -233,7 +233,7 @@ def draw_graph(G, pos, ax):
         # Si el nodo es un cuadrado azul y no tiene un '=', se añade
         if node_shapes[i] == 's' and node_colors[i] == 'skyblue' and not str(node).startswith('='):
             labeled_node = '=' + str(node)
-            
+
         else:
             labeled_node = str(node)
 
