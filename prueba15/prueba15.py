@@ -222,17 +222,26 @@ def generate_positions(G, x_position_max):
 
     return pos
 
-# Función para dibujar el grafo
 def draw_graph(G, pos, ax):
 
     # Dibujar los nodos
     node_colors = ['skyblue' if i % 2 == 0 else 'lightgreen' for i in range(len(G.nodes))]
     node_shapes = ['s' if i % 2 == 0 else 'd' for i in range(len(G.nodes))]
 
-    for i, (node, (x, y)) in enumerate(pos.items()): # Aquí, "pos.items()" devuelve una vista de los elementos (clave, valor) de "pos".
+    for i, (node, (x, y)) in enumerate(pos.items()):
 
+        # Si el nodo es un cuadrado azul y no tiene un '=', se añade
+        if node_shapes[i] == 's' and node_colors[i] == 'skyblue' and not str(node).startswith('='):
+            labeled_node = '=' + str(node)
+            
+        else:
+            labeled_node = str(node)
+
+        # Dibujar el nodo con sus atributos
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
-        ax.text(x, y, node, ha='center', va='center')
+        
+        # Añadir el texto del nodo, usando labeled_node
+        ax.text(x, y, labeled_node, ha='center', va='center')
 
     nx.draw_networkx_edges(G, pos)
     ax.axis('off')
