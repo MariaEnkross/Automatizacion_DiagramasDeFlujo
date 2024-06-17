@@ -41,6 +41,7 @@ class RedirectStdout:
 
 # Función para seleccionar un archivo Excel
 def select_file():
+
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
 
     if not file_path:
@@ -57,6 +58,7 @@ def select_file():
 
 def excel_intermedio(original_file):
     try:
+
         # Determinar la ruta para la copia del archivo
         directory = os.path.dirname(original_file)
         filename = os.path.basename(original_file)
@@ -77,7 +79,7 @@ def excel_intermedio(original_file):
         # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=new_file_path)
 
-        # Función para crear la hoja de errores en el archivo Excel copiado
+        ## 1. Función para crear la hoja de errores en el archivo Excel copiado
         def hoja_errores(workbook):
 
                 # Crear hoja llamada 'errores'
@@ -88,30 +90,36 @@ def excel_intermedio(original_file):
                 error_sheet['B1'] = 'Página dónde se encuentra:'
                 error_sheet['C1'] = 'Motivo del error:'
 
-                # Guardar los cambios en el archivo Excel copiado
-                workbook.save(filename=new_file_path)
+        # Llamar a la función para crear la hoja de errores
+        hoja_errores(workbook)
             
-        # Función para crear la hoja de uniones en el archivo Excel copiado
+        ## 2. Función para crear la hoja de uniones en el archivo Excel copiado
         def hoja_uniones(workbook):
 
                 # Crear hoja llamada 'uniones'
                 union_sheet = workbook.create_sheet('uniones')
 
+
+        # Llamar a la función para crear la hoja de errores
+        hoja_uniones(workbook)
+
+        ## 3. Función para crear la hoja_mangueras_individuales en el archivo Excel copiado
+        def hoja_mangueras_individuales(workbook):
+
+                # Crear hoja llamada 'uniones'
+                union_sheet = workbook.create_sheet('mangueras_individuales')
+
                 # Guardar los cambios en el archivo Excel copiado
                 workbook.save(filename=new_file_path)
 
 
         # Llamar a la función para crear la hoja de errores
-        hoja_errores(workbook)
+        hoja_mangueras_individuales(workbook)
 
-        # Llamar a la función para crear la hoja de errores
-        hoja_uniones(workbook)
 
-        # Llamar a la función de filtros_excel
-        filtros_excel(new_file_path)
-
-        # Llamar a la función de filtros_uniones
-        filtros_uniones(new_file_path)
+        filtros_excel(new_file_path) # Llamar a la función de filtros_excel
+        filtros_uniones(new_file_path) # Llamar a la función de filtros_uniones
+        filtros_mangueras_individuales(new_file_path) # Llamar a la función de filtros_mangueras_individuales
 
     except Exception as e:
         print(f'Ocurrió un error al crear el excel intermedio: {str(e)}')
@@ -139,20 +147,19 @@ def filtros_excel(file_path):
         elementos_no_encontrados = set()
         interno_error = set()
 
-        ## 1. Detectar filas con 4 o más celdas vacías (si no, a errores)
+        # 1. Detectar filas con 4 o más celdas vacías en columnas específicas
         for row in range(1, max_row + 1):
             empty_cell_count = 0
-            for column in range(1, max_column + 1):
-                cell = sheet.cell(row=row, column=column)
+
+            for column in ['A', 'B', 'C', 'D', 'L', 'M', 'N', 'O']:
+                cell = sheet[f"{column}{row}"]
+                
                 if cell.value is None:
                     empty_cell_count += 1
 
-                else:
-                    empty_cell_count = 0  # Reiniciar el contador si se encuentra una celda no vacía
-
                 if empty_cell_count >= 4:
                     filas_sin_elementos.add(row)
-                    break  # Salir del bucle si hay 4 o más celdas vacías seguidas
+                    break  # Salir del bucle si hay 4 o más celdas vacías
 
         ## 2. Eliminar -W en columnas D y O (si no coincide, a errores)
         for row in range(1, sheet.max_row + 1):
@@ -198,14 +205,18 @@ def filtros_excel(file_path):
         
         ## 3. Eliminar duplicados en las columnas A, B, C, D y L, M, N, O
         for column_letter in ['A', 'B', 'C', 'D', 'L', 'M', 'N', 'O']:
+
             for row in range(1, sheet.max_row + 1):
                 value_column = sheet.cell(row=row, column=column_index_from_string(column_letter)).value
+
                 if value_column:
                     values = value_column.split()
                     unique_values = []
+
                     for value in values:
                         if value not in unique_values:
                             unique_values.append(value)
+
                     sheet.cell(row=row, column=column_index_from_string(column_letter)).value = ' '.join(unique_values)
 
 
@@ -322,7 +333,7 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        # Eliminar el "=" de las celdas en columnas A, H, K, L
+        # Eliminar el "=" de las celdas en columnas A, H, K, L (corregir)
         columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):
@@ -419,7 +430,12 @@ def filtros_uniones(file_path):
             value_A = sheet.cell(row=row, column=1).value or ""
             value_B = sheet.cell(row=row, column=2).value or ""
             value_C = sheet.cell(row=row, column=3).value or ""
+
+            # Tener en cuenta la parte izquierda del punto en D
             value_D = sheet.cell(row=row, column=4).value or ""
+            if '.' in value_D:
+                value_D = value_D.split('.')[0]
+
             value_F = sheet.cell(row=row, column=6).value or ""
             value_G = sheet.cell(row=row, column=7).value or ""
 
@@ -432,7 +448,13 @@ def filtros_uniones(file_path):
             value_L = sheet.cell(row=row, column=12).value or ""
             value_M = sheet.cell(row=row, column=13).value or ""
             value_N = sheet.cell(row=row, column=14).value or ""
+
+            
+            # Tener en cuenta la parte izquierda del punto en O:
             value_O = sheet.cell(row=row, column=15).value or ""
+            if '.' in value_O:
+                value_O = value_O.split('.')[0]
+
             value_Q = sheet.cell(row=row, column=17).value or ""
             value_R = sheet.cell(row=row, column=18).value or ""
 
@@ -479,10 +501,13 @@ def filtros_uniones(file_path):
             merged_data.append(current_row)
             i += 1
 
+        # Ordenar por longitud de filas descendente
+        merged_data.sort(key=lambda x: len(x), reverse=True)
+
         # Limpiar cualquier dato existente en la hoja 'uniones'
         union_sheet.delete_rows(1, union_sheet.max_row)
 
-        # Escribir las filas unidas de nuevo en la hoja 'uniones'
+        # Escribir las filas unidas ordenadas en la hoja 'uniones'
         for row in merged_data:
             union_sheet.append(row)
 
@@ -491,6 +516,53 @@ def filtros_uniones(file_path):
 
     except Exception as e:
         print(f'Ocurrió un error al crear las uniones del Excel: {str(e)}')
+
+
+def filtros_mangueras_individuales(file_path):
+    try:
+
+        # Cargar el archivo Excel
+        workbook = load_workbook(filename=file_path)
+
+        # Obtener la hoja 'uniones' y crear la hoja 'hoja_mangueras_individuales' si no existe
+        union_sheet = workbook['uniones']
+
+        if 'mangueras_individuales' not in workbook.sheetnames:
+            mangueras_sheet = workbook.create_sheet('mangueras_individuales')
+
+        else:
+            mangueras_sheet = workbook['mangueras_individuales']
+
+        # Contador para el índice de la fila en 'hoja_mangueras_individuales'
+        mangueras_row_idx = 1
+
+        # Iterar por las filas de la hoja 'uniones' y seleccionar aquellas con máximo 3 columnas
+        row_idx = 1
+
+        while row_idx <= union_sheet.max_row:
+            row = union_sheet[row_idx]
+
+            # Contar el número de celdas con valor en la fila
+            count_cells = sum(1 for cell in row if cell.value is not None)
+
+            if count_cells <= 3:
+
+                # Copiar la fila a la hoja 'hoja_mangueras_individuales'
+                for cell in row:
+                    mangueras_sheet.cell(row=mangueras_row_idx, column=cell.column, value=cell.value)
+                mangueras_row_idx += 1
+
+                # Eliminar la fila de 'uniones'
+                union_sheet.delete_rows(row_idx, 1)
+                continue
+
+            row_idx += 1
+
+        # Guardar los cambios en el archivo Excel
+        workbook.save(filename=file_path)
+
+    except Exception as e:
+        print(f'Ocurrió un error al procesar el archivo Excel: {str(e)}')
 
 
 # Función para procesar el archivo seleccionado
@@ -642,7 +714,7 @@ def draw_graph(G, pos, ax):
     ax.axis('off')
 
 
-def tabla_errores(excel_path):
+""" def tabla_errores(excel_path):
 
     # Leer los datos de la hoja "errores" del Excel
     workbook = load_workbook(filename=excel_path)
@@ -676,7 +748,7 @@ def tabla_errores(excel_path):
         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
         
-    ]))
+    ])) """
 
 
 # Función para guardar el archivo PDF combinado
