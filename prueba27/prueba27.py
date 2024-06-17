@@ -322,7 +322,7 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        # Eliminar el "=" de las celdas en: Columnas A, H, K, L
+        # Eliminar el "=" de las celdas en columnas A, H, K, L
         columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):
@@ -656,7 +656,7 @@ def tabla_errores(excel_path):
     # Estilos para el PDF
     styles = getSampleStyleSheet()
     styleN = styles["BodyText"]
-    styleN.alignment = 1  # Center alignment
+    styleN.alignment = 1  # Centrar alignment
 
     # Crear la tabla de errores
     data = []
@@ -666,6 +666,7 @@ def tabla_errores(excel_path):
     # Crear la tabla usando reportlab
     table = Table(data)
     table.setStyle(TableStyle([
+
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -674,6 +675,7 @@ def tabla_errores(excel_path):
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        
     ]))
 
 
