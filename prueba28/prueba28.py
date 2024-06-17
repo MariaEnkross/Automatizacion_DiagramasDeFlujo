@@ -333,7 +333,7 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        # Eliminar el "=" de las celdas en columnas A, H, K, L (corregir)
+        #  (corregir) Eliminar el "=" de las celdas en columnas A, H, K, L
         columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):
@@ -449,7 +449,6 @@ def filtros_uniones(file_path):
             value_M = sheet.cell(row=row, column=13).value or ""
             value_N = sheet.cell(row=row, column=14).value or ""
 
-            
             # Tener en cuenta la parte izquierda del punto en O:
             value_O = sheet.cell(row=row, column=15).value or ""
             if '.' in value_O:
@@ -465,7 +464,7 @@ def filtros_uniones(file_path):
 
             union_row_idx += 1
 
-        ## Union sobre las filas ##
+        ## Union de las filas ##
         data = [] # Leer todas las filas en la hoja 'uniones'
 
         for row in union_sheet.iter_rows(values_only=True):
@@ -533,11 +532,9 @@ def filtros_mangueras_individuales(file_path):
         else:
             mangueras_sheet = workbook['mangueras_individuales']
 
-        # Contador para el índice de la fila en 'hoja_mangueras_individuales'
-        mangueras_row_idx = 1
-
-        # Iterar por las filas de la hoja 'uniones' y seleccionar aquellas con máximo 3 columnas
-        row_idx = 1
+        
+        mangueras_row_idx = 1 # Contador para el índice de la fila en 'hoja_mangueras_individuales'
+        row_idx = 1 # Iterar por las filas de la hoja 'uniones' y seleccionar aquellas con máximo 3 columnas
 
         while row_idx <= union_sheet.max_row:
             row = union_sheet[row_idx]
@@ -545,7 +542,7 @@ def filtros_mangueras_individuales(file_path):
             # Contar el número de celdas con valor en la fila
             count_cells = sum(1 for cell in row if cell.value is not None)
 
-            if count_cells <= 3:
+            if count_cells == 3:
 
                 # Copiar la fila a la hoja 'hoja_mangueras_individuales'
                 for cell in row:
