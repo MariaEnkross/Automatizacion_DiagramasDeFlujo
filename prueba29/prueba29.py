@@ -4,7 +4,6 @@ from io import BytesIO
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
-from openpyxl.styles import NamedStyle
 import os
 import shutil
 from PyPDF2 import PdfMerger 
@@ -13,9 +12,11 @@ from PyPDF2 import PdfMerger
 import matplotlib.pyplot as plt  
 import networkx as nx  
 from reportlab.lib.pagesizes import A4, A3
+
+from xlwings.constants import PaperSize
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
 
 # Librerías para la Interfaz Gráfica
 import customtkinter as ctk  
@@ -39,27 +40,31 @@ class RedirectStdout:
     def flush(self):
         pass
 
+# Variable global para almacenar la ruta del archivo procesado
+new_file_path = ""
 
 # Función para seleccionar un archivo Excel
 def select_file():
+    global new_file_path  # Asegurar que estamos utilizando la variable global
 
-    file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls *.xlsx")])
+    file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls;*.xlsx")])
 
-    if not file_path:
-        
-        print("No se seleccionó ningún archivo. El programa se cerrará.")
-        return
-    
-    else:
+    if file_path:
         file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
 
-        excel_intermedio(file_path)
-
+        # Llamar a excel_intermedio con la ruta seleccionada
+        new_file_path = excel_intermedio(file_path)
+        if new_file_path:
+            print(f"Ruta del archivo copiado: {new_file_path}")
+        else:
+            print("No se seleccionó ningún archivo. El programa se cerrará.")
 
 def excel_intermedio(original_file):
-    try:
+    
+    global new_file_path  # Asegurar que estamos utilizando la variable global
 
+    try:
         # Determinar la ruta para la copia del archivo
         directory = os.path.dirname(original_file)
         filename = os.path.basename(original_file)
@@ -68,19 +73,21 @@ def excel_intermedio(original_file):
         # Verificar si ya existe una copia del archivo
         if os.path.exists(new_file_path):
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
-
             if not overwrite_confirmation:
                 print("Operación cancelada por el usuario.")
-
                 return
 
         # Copiar el archivo Excel original a la nueva ubicación
         shutil.copy(original_file, new_file_path)
 
+        # Abrir el archivo Excel copiado con xlwings
+        app = xw.App(visible=False)
+        wb = app.books.open(new_file_path)
+
         # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=new_file_path)
 
-         # Función para configurar todas las celdas de las hojas al formato de texto.   
+        # Función para configurar todas las celdas de las hojas al formato de texto.   
         def formato_texto(sheet):
             for row in sheet.iter_rows():
                 for cell in row:
@@ -88,60 +95,53 @@ def excel_intermedio(original_file):
 
         ## 1. Función para crear la hoja de errores en el archivo Excel copiado
         def hoja_errores(workbook):
+            # Crear hoja llamada 'errores'
+            error_sheet = workbook.create_sheet('errores')
+            # Agregar las cabeceras de las columnas
+            error_sheet['A1'] = 'Nombre de la Manguera:'
+            error_sheet['B1'] = 'Página dónde se encuentra:'
+            error_sheet['C1'] = 'Motivo del error:'
+            formato_texto(error_sheet) # Asegurar que todas las celdas de la hoja de errores estén en formato texto
 
-                # Crear hoja llamada 'errores'
-                error_sheet = workbook.create_sheet('errores')
-
-                # Agregar las cabeceras de las columnas
-                error_sheet['A1'] = 'Nombre de la Manguera:'
-                error_sheet['B1'] = 'Página dónde se encuentra:'
-                error_sheet['C1'] = 'Motivo del error:'
-
-                # Asegurar que todas las celdas de la hoja de errores estén en formato texto
-                formato_texto(error_sheet)
-
-        
-
+        # Llamar a la función para crear la hoja de errores
+        hoja_errores(workbook)
             
         ## 2. Función para crear la hoja de uniones en el archivo Excel copiado
         def hoja_uniones(workbook):
+            # Crear hoja llamada 'uniones'
+            union_sheet = workbook.create_sheet('uniones')
+            formato_texto(union_sheet) # Asegurar que todas las celdas de la hoja de uniones estén en formato texto
 
-                # Crear hoja llamada 'uniones'
-                union_sheet = workbook.create_sheet('uniones')
-
-                # Asegurar que todas las celdas de la hoja de errores estén en formato texto
-                formato_texto(union_sheet)
-
-        
+        # Llamar a la función para crear la hoja de uniones
+        hoja_uniones(workbook)
 
         ## 3. Función para crear la hoja_mangueras_individuales en el archivo Excel copiado
         def hoja_mangueras_individuales(workbook):
+            # Crear hoja llamada 'mangueras_individuales'
+            mangueras_sheet = workbook.create_sheet('mangueras_individuales')
+            formato_texto(mangueras_sheet) # Asegurar que todas las celdas de la hoja de mangueras estén en formato texto
 
-                # Crear hoja llamada 'mangueras'
-                mangueras_sheet = workbook.create_sheet('mangueras_individuales')
-
-                # Asegurar que todas las celdas de la hoja de errores estén en formato texto
-                formato_texto(mangueras_sheet)
-                
-        # Llamar a la funciones
-        hoja_errores(workbook)
-        hoja_uniones(workbook)
+        # Llamar a la función para crear la hoja de mangueras_individuales
         hoja_mangueras_individuales(workbook)
 
-        filtros_excel(new_file_path)
-        filtros_uniones(new_file_path)
-        filtros_mangueras_individuales(new_file_path) 
+        # Guardar los cambios preliminares en el archivo copiado
+        workbook.save(new_file_path)
+
+        # Llamar a las funciones de filtros
+        filtros_excel(new_file_path) # Llamar a la función de filtros_excel
+        filtros_uniones(new_file_path) # Llamar a la función de filtros_uniones
+        filtros_mangueras_individuales(new_file_path) # Llamar a la función de filtros_mangueras_individuales
 
         # Guardar los cambios
-        workbook.save(filename=new_file_path)
+        wb.save()
+        wb.close()
+        app.quit()
+
+        return new_file_path  # Devolver new_file_path después de procesar
 
     except Exception as e:
         print(f'Ocurrió un error al crear el excel intermedio: {str(e)}')
-
-        return []
-
-
-    
+        return None
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
 
@@ -338,14 +338,27 @@ def filtros_excel(file_path):
 
         ## 6. Agregar saltos de línea en la columna H
         for row in range(1, sheet.max_row + 1):
-            cell = sheet.cell(row=row, column=8)
+            cell = sheet.cell(row=row, column=8)  # Columna H
             value = cell.value
 
             if value and isinstance(value, str):
-
                 # Reemplazar "/ " por "/\n"
                 new_value = value.replace("/", "/\n")
+
+                # Asignar el nuevo valor a la celda
                 cell.value = new_value
+
+        #  (corregir)
+        #  Eliminar el "=" de las celdas en columnas A, H, K, L
+        columns_to_process = [1, 8, 11, 12]   
+
+        for row in range(1, sheet.max_row + 1):
+            
+            for col in columns_to_process:
+                cell_value = sheet.cell(row=row, column=col).value
+
+                if isinstance(cell_value, str) and cell_value.startswith('='):
+                    sheet.cell(row=row, column=col).value = cell_value.lstrip('=')
 
         # Crear hoja llamada 'errores' si no existe
         if 'errores' not in workbook.sheetnames:
@@ -372,8 +385,10 @@ def filtros_excel(file_path):
                 motivo_error = "Manguera sin Origenes ni Destinos conectados"
 
             elif row_index in filas_con_errores:
-                motivo_error = "El Origen y/o Destino no se encuentra en el nombre de la Manguera"
-
+                motivo_error = '''El Origen y/o Destino no se 
+encuentra en el nombre
+ de la Manguera'''
+    
             elif row_index in elementos_no_encontrados:
                 motivo_error = "Elementos no encontrados en el nombre de la Manguera"
 
@@ -408,7 +423,6 @@ def filtros_excel(file_path):
 
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
-
 
 def filtros_uniones(file_path):
     try:
@@ -565,82 +579,189 @@ def filtros_mangueras_individuales(file_path):
         print(f'Ocurrió un error al procesar el archivo Excel: {str(e)}')
 
 
+# Función para leer los datos de la hoja 'errores'
+def leer_datos_errores():
+
+    global new_file_path  # Asegurar que estamos utilizando la variable global
+
+    try:
+        # Verificar que new_file_path no sea None
+        if not new_file_path:
+            messagebox.showinfo("Información", "No se ha seleccionado ningún archivo para procesar.")
+            return []
+
+        # Cargar el archivo Excel
+        workbook = load_workbook(filename=new_file_path)
+        if 'errores' not in workbook.sheetnames:
+            messagebox.showinfo("Información", "La hoja 'errores' no existe en el archivo.")
+            return []
+
+        sheet = workbook['errores']
+
+        # Obtener los datos de la hoja 'errores'
+        datos_errores = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            datos_errores.append(row)
+
+        return datos_errores
+
+    except Exception as e:
+        print(f"Ocurrió un error al leer los datos de la hoja 'errores': {str(e)}")
+        return []
+
 # Función para procesar el archivo seleccionado
 def process_file():
 
-    original_file = file_entry.get()
+    global new_file_path  # Asegurar que estamos utilizando la variable global
 
-    if not original_file:
+    if not new_file_path:
         print("No se seleccionó ningún archivo. El programa se cerrará.")
-
         return
 
-    file_path = file_entry.get()
     tamaño_hoja = size_var.get()
     figsize, x_position_max = get_figsize_and_max_pos(tamaño_hoja)
 
     # Crear un objeto para combinar PDFs
     pdf_merger = PdfMerger()
 
-    # Lista para almacenar los PDF generados
-    pdf_files = []
-
     # Abrir el archivo de Excel con xlwings
     app = xw.App(visible=False)
-    wb = app.books.open(file_path)  # Abrir el archivo seleccionado por el usuario
-    sheet = wb.sheets[0]
+    app.display_alerts = False
+    app.screen_updating = False
 
-    # Leer datos desde Excel
-    df = sheet.used_range.value
+    try:
 
-    # Iterar sobre las filas del DataFrame
-    for idx, row in enumerate(df, start=1):
+        wb = app.books.open(new_file_path)  # Utilizar new_file_path
+
+        ### Procesar la hoja 'uniones'
+        sheet_uniones = wb.sheets['uniones']
+        df_uniones = sheet_uniones.used_range.value
+
+        # Iterar sobre las filas del DataFrame
+        for idx, row in enumerate(df_uniones, start=1):
+
+            # Verificar si la fila tiene suficientes valores para dibujar el gráfico
+            if len(row) > 1:
+
+                # Crear un nuevo grafo para cada fila
+                G = create_graph_from_row(row)
+
+                # Dibujar el gráfico con el tamaño adecuado
+                fig, ax = plt.subplots(figsize=figsize)
+
+                # Calcular posiciones de los nodos
+                pos = generate_positions(G, x_position_max)
+                draw_graph(G, pos, ax)
+
+                # Guardar la figura en un objeto BytesIO
+                buf = BytesIO()
+                plt.savefig(buf, format='pdf')
+                buf.seek(0)
+                pdf_merger.append(buf)
+                buf.close()  # Cerrar BytesIO para liberar memoria
+                plt.close(fig)  # Cerrar la figura para liberar memoria
+
+                print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
+            else:
+                print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
+
+         ### Leer datos de la hoja 'mangueras_individuales'
+        sheet_mangueras = wb.sheets['mangueras_individuales']
+        df_mangueras = sheet_mangueras.used_range.value
+
+        # Preparar los datos para la tabla
+        data = [['Elemento 1', 'Manguera', 'Elemento 2']]
+        for idx, row in enumerate(df_mangueras, start=1):
+            if len(row) == 3:
+                data.append([row[0], row[1], row[2]])
+            else:
+                print(f"Advertencia: La fila {idx} no tiene tres conexiones. Se omitirá.")
+
+        # Configurar el estilo de tabla
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),  # Color de texto para encabezado
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Borde interior de celdas
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),  # Borde exterior de tabla
+        ])
+
+        # Crear la tabla con los datos y estilo configurados
+        table = Table(data)
+        table.setStyle(style)
+
+        # Crear un objeto BytesIO para guardar el PDF de la tabla
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4)
+        elements = []
+        elements.append(table)
+        doc.build(elements)
+
+        # Añadir el PDF de la tabla al pdf_merger
+        buf.seek(0)
+        pdf_merger.append(buf)
+        buf.close()
+
+        ### Configurar la hoja 'errores' para PDF
+        sheet_errores = wb.sheets['errores']
+
+        sheet_errores.page_setup.paperSize = 9  # Código numérico para tamaño A4
+        sheet_errores.page_setup.fitToWidth = 1
+        sheet_errores.page_setup.fitToHeight = False
+
+        sheet_errores.left_margin = 0.5
+        sheet_errores.right_margin = 0.5
+        sheet_errores.top_margin = 0.5
+        sheet_errores.bottom_margin = 0.5
+        sheet_errores.header_margin = 0.5
+        sheet_errores.footer_margin = 0.5
+
+        # Crear un objeto BytesIO para guardar el PDF de la tabla de errores
+        buf_errores = BytesIO()
         
-        # Verificar si la fila tiene suficientes valores para dibujar el gráfico
-        if len(row) > 1:  # Por lo menos dos nodos para crear una conexión
+        # Leer datos de la hoja 'errores'
+        datos_errores = sheet_errores.used_range.value[1:]  # Excluir el encabezado
+        
+        # Configurar estilo de la tabla
+        style_errores = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),  # Color de texto para encabezado
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Borde interior de celdas
+            ('BOX', (0, 0), (-1, -1), 0.25, colors.black),  # Borde exterior de tabla
+        ])
 
-            # Crear un nuevo grafo para cada fila
-            G = create_graph_from_row(row)
+        # Añadir títulos a los datos de errores
+        datos_errores.insert(0, ['Nombre de la Manguera', 'Página donde se encuentra', 'Motivo del error'])
 
-            # Dibujar el gráfico con el tamaño adecuado
-            fig, ax = plt.subplots(figsize=figsize)
+        # Crear la tabla de errores con los datos y estilo configurados
+        table_errores = Table(datos_errores)
+        table_errores.setStyle(style_errores)
 
-            # Calcular posiciones de los nodos
-            pos = generate_positions(G, x_position_max)
+        # Crear un objeto BytesIO para guardar el PDF de la tabla de errores
+        buf_errores = BytesIO()
+        doc_errores = SimpleDocTemplate(buf_errores, pagesize=A4)
+        
+        elements_errores = []
+        elements_errores.append(table_errores)
+        doc_errores.build(elements_errores)
 
-            draw_graph(G, pos, ax)
+        # Añadir el PDF de la tabla de errores al pdf_merger
+        buf_errores.seek(0)
+        pdf_merger.append(buf_errores)
+        buf_errores.close()
 
-            # Guardar la figura en un objeto BytesIO
-            buf = BytesIO()
-            plt.savefig(buf, format='pdf')
-            buf.seek(0)
-            pdf_merger.append(buf)
-            buf.close()  # Cerrar BytesIO para liberar memoria
-            plt.close(fig)  # Cerrar la figura para liberar memoria
+        # Guardar el archivo PDF combinado
+        save_combined_pdf(pdf_merger)
 
-            print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
+    except Exception as e:
+        print(f"Ocurrió un error al procesar el archivo: {str(e)}")
 
-            # Guardar el PDF generado en la lista
-            pdf_files.append(buf)
+    finally:
 
-        else:
-            print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
-
-    # Guardar el archivo PDF combinado
-    save_combined_pdf(pdf_merger)
-
-    # Cerrar el libro de Excel
-    wb.close()
-
-    # Cerrar la aplicación de Excel
-    app.quit()
-
-    # Borrar el archivo intermedio
-    os.remove(file_path)
-
-    # Cerrar los PDF generados
-    for pdf_file in pdf_files:
-        pdf_file.close()
+        # Cerrar el libro de Excel y la aplicación
+        wb.close()
+        app.quit()
 
 
 # Función para obtener el tamaño de la figura y la posición máxima en X
@@ -672,6 +793,7 @@ def create_graph_from_row(row):
 
 # Función para generar posiciones de los nodos
 def generate_positions(G, x_position_max):
+    
     # Inicializar el diccionario de posiciones
     pos = {} 
     x_position, y_position = 0, 0
@@ -697,66 +819,37 @@ def draw_graph(G, pos, ax):
 
     for i, (node, (x, y)) in enumerate(pos.items()):
 
+        # Si el nodo es un cuadrado azul y no tiene un '=', se añade
+        if node_shapes[i] == 's' and node_colors[i] == 'skyblue' and not str(node).startswith('='):
+            labeled_node = '=' + str(node)
+
+        else:
+            labeled_node = str(node)
+
         # Dibujar el nodo con sus atributos
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
+        
+        # Añadir el texto del nodo, usando labeled_node con tamaño de fuente ajustado
+        nx.draw_networkx_labels(G, pos, labels={node: labeled_node}, font_size=10, ax=ax)
 
     nx.draw_networkx_edges(G, pos)
     ax.axis('off')
 
 
-""" def tabla_errores(excel_path):
-
-    # Leer los datos de la hoja "errores" del Excel
-    workbook = load_workbook(filename=excel_path)
-    sheet = workbook['errores']
-
-    # Crear el PDF usando reportlab
-    pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
-    elements = []
-
-    # Estilos para el PDF
-    styles = getSampleStyleSheet()
-    styleN = styles["BodyText"]
-    styleN.alignment = 1  # Centrar alignment
-
-    # Crear la tabla de errores
-    data = []
-    for row in sheet.iter_rows(values_only=True):
-        data.append(list(row))
-    
-    # Crear la tabla usando reportlab
-    table = Table(data)
-    table.setStyle(TableStyle([
-
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        
-    ])) """
-
-
 # Función para guardar el archivo PDF combinado
 def save_combined_pdf(pdf_merger):
-
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
     
     if not pdf_combined_file:
-        ctk.messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
+        messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
         root.destroy()
-
     else:
         with open(pdf_combined_file, 'wb') as output_pdf:
             pdf_merger.write(output_pdf)
         pdf_merger.close()  # Cerrar el PdfMerger para liberar recursos
 
         # Mensaje de Información al finalizar el proceso
-        ctk.messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
+        messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
 
 ###### Configuración de la apariencia de la ventana principal con customtkinter #####
@@ -774,8 +867,8 @@ file_entry = ctk.CTkEntry(root, width=300)
 file_entry.grid(row=0, column=1, padx=10, pady=10)
 ctk.CTkButton(root, text="Examinar", command=select_file).grid(row=0, column=2, padx=10, pady=10)
 
-""" # Botón 'Generar PDF'
-ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, padx=10, pady=10) """
+# Botón 'Generar PDF'
+ctk.CTkButton(root, text="Generar PDF", command=process_file).grid(row=3, column=0, columnspan=3, padx=10, pady=10) 
 
 # Botón 'Tamaño hoja'
 ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, padx=10, pady=10)

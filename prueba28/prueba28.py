@@ -333,7 +333,8 @@ def filtros_excel(file_path):
                 # Asignar el nuevo valor a la celda
                 cell.value = new_value
 
-        #  (corregir) Eliminar el "=" de las celdas en columnas A, H, K, L
+        #  (corregir)
+        #  Eliminar el "=" de las celdas en columnas A, H, K, L
         columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):

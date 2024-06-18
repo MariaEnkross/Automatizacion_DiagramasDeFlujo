@@ -230,19 +230,19 @@ def draw_graph(G, pos, ax):
 
     for i, (node, (x, y)) in enumerate(pos.items()):
 
-        # Si el nodo es un cuadrado azul y no tiene un '=', se añade
+        """ # Si el nodo es un cuadrado azul y no tiene un '=', se añade
         if node_shapes[i] == 's' and node_colors[i] == 'skyblue' and not str(node).startswith('='):
             labeled_node = '=' + str(node)
 
         else:
-            labeled_node = str(node)
+            labeled_node = str(node) """
 
         # Dibujar el nodo con sus atributos
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
         
-        # Añadir el texto del nodo, usando labeled_node
+        """ # Añadir el texto del nodo, usando labeled_node
         ax.text(x, y, labeled_node, ha='center', va='center')
-
+ """
     nx.draw_networkx_edges(G, pos)
     ax.axis('off')
 
