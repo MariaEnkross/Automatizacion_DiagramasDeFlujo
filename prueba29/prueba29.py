@@ -12,10 +12,7 @@ from PyPDF2 import PdfMerger
 import matplotlib.pyplot as plt  
 import networkx as nx  
 from reportlab.lib.pagesizes import A4, A3
-
-from xlwings.constants import PaperSize
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 
 # Librerías para la Interfaz Gráfica
@@ -650,7 +647,7 @@ def process_file():
                 fig, ax = plt.subplots(figsize=figsize)
 
                 # Calcular posiciones de los nodos
-                pos = generate_positions(G, x_position_max)
+                pos = generate_positions(G, x_position_max, tamaño_hoja)
                 draw_graph(G, pos, ax)
 
                 # Guardar la figura en un objeto BytesIO
@@ -670,13 +667,13 @@ def process_file():
         df_mangueras = sheet_mangueras.used_range.value
 
         # Preparar los datos para la tabla
-        data = [['Elemento 1', 'Manguera', 'Elemento 2']]
+        data = [['Elemento Origen', 'Manguera', 'Elemento Destino']]
         for idx, row in enumerate(df_mangueras, start=1):
             if len(row) == 3:
                 data.append([row[0], row[1], row[2]])
             else:
                 print(f"Advertencia: La fila {idx} no tiene tres conexiones. Se omitirá.")
-
+        
         # Configurar el estilo de tabla
         style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
@@ -792,24 +789,21 @@ def create_graph_from_row(row):
 
 
 # Función para generar posiciones de los nodos
-def generate_positions(G, x_position_max):
-    
-    # Inicializar el diccionario de posiciones
-    pos = {} 
+def generate_positions(G, x_position_max, tamaño_hoja):
+    pos = {}
     x_position, y_position = 0, 0
+    max_nodes_per_row = 3 if tamaño_hoja == 'A4' else 5
 
     for node in G.nodes():
-        pos[node] = (x_position, y_position) # Inicializar el diccionario de posiciones
+        pos[node] = (x_position, y_position)
 
-        # Posición de los nodos
-        if x_position < x_position_max:
-            x_position += 1
-        else:
-            x_position = 1
+        if (x_position + 1) % max_nodes_per_row == 0:
+            x_position = 1  # Empezar desde 1 en la siguiente fila
             y_position -= 1
+        else:
+            x_position += 1
 
     return pos
-
 
 # Función para dibujar los nodos del grafo
 def draw_graph(G, pos, ax):
@@ -830,7 +824,7 @@ def draw_graph(G, pos, ax):
         nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
         
         # Añadir el texto del nodo, usando labeled_node con tamaño de fuente ajustado
-        nx.draw_networkx_labels(G, pos, labels={node: labeled_node}, font_size=10, ax=ax)
+        nx.draw_networkx_labels(G, pos, labels={node: labeled_node}, font_size=6, ax=ax)
 
     nx.draw_networkx_edges(G, pos)
     ax.axis('off')
