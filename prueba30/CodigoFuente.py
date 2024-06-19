@@ -1,7 +1,6 @@
 # Librerías para la Manipulación de Archivos y Datos
 import sys
 from io import BytesIO
-import time
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
@@ -14,11 +13,13 @@ import matplotlib.pyplot as plt
 import networkx as nx  
 from reportlab.lib.pagesizes import A4, A3
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from PIL import Image, ImageTk
 from reportlab.lib import colors
 
 # Librerías para la Interfaz Gráfica
 import customtkinter as ctk  
 from tkinter import filedialog, messagebox 
+from pathlib import Path
 
 
 """ # Ocultar la CMD de Windows al ejecutar el .exe
@@ -804,7 +805,7 @@ def draw_graph(G, pos, ax):
             labeled_node = str(node)
 
         # Dibujar el nodo con sus atributos
-        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=3000, node_shape=node_shapes[i], node_color=node_colors[i])
+        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=4000, node_shape=node_shapes[i], node_color=node_colors[i])
         
         # Añadir el texto del nodo, usando labeled_node con tamaño de fuente ajustado
         nx.draw_networkx_labels(G, pos, labels={node: labeled_node}, font_size=6, ax=ax)
@@ -827,6 +828,22 @@ def save_combined_pdf(pdf_merger):
 
         # Mensaje de Información al finalizar el proceso
         messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
+
+
+# Función para mostrar el contenido del archivo de ayuda
+def show_help():
+    help_window = ctk.CTkToplevel(root)
+    help_window.title("Ayuda")
+    help_window.geometry("400x300")
+    
+    help_file_path = Path("docs/ayuda.txt")
+    with help_file_path.open("r", encoding="utf-8") as file:
+        help_text = file.read()
+    
+    text_widget = ctk.CTkTextbox(help_window, wrap='word', height=300, width=400)
+    text_widget.pack(padx=10, pady=10, expand=True, fill='both')
+    text_widget.insert("1.0", help_text)
+    text_widget.configure(state='disabled')
 
 
 ###### Configuración de la apariencia de la ventana principal con customtkinter #####
@@ -861,6 +878,14 @@ text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
 text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
 sys.stdout = RedirectStdout(text_widget)
+
+# Botón de ayuda en la esquina inferior derecha
+help_image_path = Path("assets/images/icon_help.png")
+help_image = Image.open(help_image_path)
+help_image = help_image.resize((32, 32))  
+help_icon = ImageTk.PhotoImage(help_image)
+help_button = ctk.CTkButton(root, image=help_icon, text="", command=show_help, width=32, height=32)
+help_button.place(relx=1.0, rely=1.0, x=-20, y=-20, anchor='se')  # Ubicar en la esquina inferior derecha
 
 # Mantener la ventana abierta y a la espera de eventos (clics de ratón, pulsaciones de teclas, etc.)
 root.mainloop()
