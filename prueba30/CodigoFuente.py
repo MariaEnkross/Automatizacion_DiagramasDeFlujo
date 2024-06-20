@@ -3,6 +3,7 @@ import sys
 import os
 import shutil
 import xlwings as xw
+""" import win32gui, win32con """
 from io import BytesIO
 from PyPDF2 import PdfMerger 
 from openpyxl import load_workbook
@@ -11,16 +12,17 @@ from openpyxl.utils import column_index_from_string
 # Librerías para la Creación y Manipulación de Gráficos
 import matplotlib.pyplot as plt  
 import networkx as nx  
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle
 from PIL import Image
 
 # Librerías para la Interfaz Gráfica
-from tkinter import filedialog, messagebox 
-from pathlib import Path
 import customtkinter as ctk
-
+from tkinter import filedialog, messagebox
+from pathlib import Path
 
 """ # Ocultar la CMD de Windows al ejecutar el .exe
 hide = win32gui.GetForegroundWindow()
@@ -651,7 +653,7 @@ def process_file():
             else:
                 print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
 
-         ### Leer datos de la hoja 'mangueras_individuales'
+        # Leer datos de la hoja 'mangueras_individuales'
         sheet_mangueras = wb.sheets['mangueras_individuales']
         df_mangueras = sheet_mangueras.used_range.value
 
@@ -659,34 +661,61 @@ def process_file():
         data = [['Elemento Origen', 'Manguera', 'Elemento Destino']]
         for idx, row in enumerate(df_mangueras, start=1):
             if len(row) == 3:
-                data.append([row[0], row[1], row[2]])
+                elemento_origen = row[0]
+                manguera = row[1]
+                elemento_destino = row[2]
+
+                # Verificar y ajustar la primera columna
+                if not elemento_origen.startswith('='):
+                    elemento_origen = '=' + elemento_origen
+
+                # Verificar y ajustar la tercera columna
+                if not elemento_destino.startswith('='):
+                    elemento_destino = '=' + elemento_destino
+
+                data.append([elemento_origen, manguera, elemento_destino])
+
             else:
                 print(f"Advertencia: La fila {idx} no tiene tres conexiones. Se omitirá.")
-        
+
         # Configurar el estilo de tabla
-        style = TableStyle([
+        style_table = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro horizontalmente
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alinear todo al centro verticalmente
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),  # Color de texto para encabezado
             ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Borde interior de celdas
             ('BOX', (0, 0), (-1, -1), 0.25, colors.black),  # Borde exterior de tabla
         ])
 
+        # Crear el título
+        title_text = "Tabla de conexiones de mangueras individuales"
+        title_style = ParagraphStyle(
+            name='TitleStyle',
+            fontSize=16,
+            textColor=colors.black,
+            alignment=1,  # 0=left, 1=center, 2=right
+            spaceAfter=20  # Espacio después del párrafo
+        )
+        title = Paragraph(title_text, title_style)
+
         # Crear la tabla con los datos y estilo configurados
         table = Table(data)
-        table.setStyle(style)
+        table.setStyle(style_table)
 
         # Crear un objeto BytesIO para guardar el PDF de la tabla
         buf = BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=A4)
-        elements = []
-        elements.append(table)
+        doc = SimpleDocTemplate(buf, pagesize=letter)
+        elements = [title, table]
+
+        # Construir el PDF
         doc.build(elements)
 
-        # Añadir tabla al pdf_merger
+        # Añadir buf al pdf_merger (suponiendo que pdf_merger es una lista donde se van añadiendo los PDFs)
         pdf_merger.append(buf)
 
-        ### Configurar la hoja 'errores' para PDF
+
+        # Configurar la hoja 'errores' para PDF
         sheet_errores = wb.sheets['errores']
 
         sheet_errores.page_setup.paperSize = 9  # Código numérico para tamaño A4
@@ -700,23 +729,40 @@ def process_file():
         sheet_errores.header_margin = 0.5
         sheet_errores.footer_margin = 0.5
 
-        # Crear un objeto BytesIO para guardar el PDF de la tabla de errores
-        buf_errores = BytesIO()
-        
         # Leer datos de la hoja 'errores'
         datos_errores = sheet_errores.used_range.value[1:]  # Excluir el encabezado
-        
+
         # Configurar estilo de la tabla
         style_errores = TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro horizontalmente
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alinear todo al centro verticalmente
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),  # Color de texto para encabezado
             ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Borde interior de celdas
             ('BOX', (0, 0), (-1, -1), 0.25, colors.black),  # Borde exterior de tabla
         ])
 
-        # Añadir títulos a los datos de errores
-        datos_errores.insert(0, ['Nombre de la Manguera', 'Página donde se encuentra', 'Motivo del error'])
+        # Verificar y ajustar la segunda columna ('Página donde se encuentra')
+        for fila in datos_errores:
+            if len(fila) > 1:  # Asegurar que haya al menos dos elementos en la fila
+                if fila[1] is not None and not fila[1].startswith('=='):
+                    fila[1] = '==' + fila[1]
+
+        # Añadir títulos a los datos de errores si no están ya presentes
+        titulo = ['Nombre de la Manguera', 'Página donde se encuentra', 'Motivo del error']
+        if datos_errores[0] != titulo:
+            datos_errores.insert(0, titulo)
+
+        # Crear el título
+        title_text = "Tabla de mangueras erróneas y sus motivos"
+        title_style = ParagraphStyle(
+            name='TitleStyle',
+            fontSize=16,
+            textColor=colors.black,
+            alignment=1,  # 0=left, 1=center, 2=right
+            spaceAfter=20  # Espacio después del párrafo
+        )
+        title = Paragraph(title_text, title_style)
 
         # Crear la tabla de errores con los datos y estilo configurados
         table_errores = Table(datos_errores)
@@ -725,9 +771,9 @@ def process_file():
         # Crear un objeto BytesIO para guardar el PDF de la tabla de errores
         buf_errores = BytesIO()
         doc_errores = SimpleDocTemplate(buf_errores, pagesize=A4)
-        
-        elements_errores = []
-        elements_errores.append(table_errores)
+        elements_errores = [title, table_errores]
+
+        # Construir el PDF de la tabla de errores
         doc_errores.build(elements_errores)
 
         # Añadir tabla de errores al pdf_merger
@@ -736,8 +782,8 @@ def process_file():
         buf_errores.close()
 
         # Cerrar y guardar el PDF de la tabla
-        buf.close()
         wb.close()
+        buf.close()
 
         # Eliminar el archivo copia
         if os.path.exists(new_file_path):
@@ -850,8 +896,8 @@ root = ctk.CTk() # Crear la ventana principal
 root.title("ENK Generador de Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
-# Logo icono ventana
-root.iconbitmap('GeneradorUnifilares/assets/images/isotipo2.ico')
+# Icono de la ventana
+root.iconbitmap('GeneradorUnifilares/assets/images/isotipo48_48.ico')
 
 # Botón 'Examinar'
 ctk.CTkLabel(root, text="Seleccionar archivo del Excel:").grid(row=0, column=0, padx=10, pady=10)
@@ -878,7 +924,7 @@ imagen_ayuda = imagen_ayuda.resize((32, 32))
 icono_ayuda = ctk.CTkImage(imagen_ayuda) # Convertir a CTkImage
 
 ruta_archivo_ayuda = Path("GeneradorUnifilares/docs/ayuda/ManualUso.pdf") # Ruta del archivo de ayuda
-boton_ayuda = ctk.CTkButton(root, image=icono_ayuda, text="", width=32, height=32, 
+boton_ayuda = ctk.CTkButton(root, image=icono_ayuda, text="", fg_color="transparent", width=32, height=32, 
                             command=lambda: os.startfile(ruta_archivo_ayuda))
 boton_ayuda.place(relx=1.0, rely=1.0, x=-20, y=-20, anchor='se') 
 

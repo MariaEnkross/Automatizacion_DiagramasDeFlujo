@@ -1,6 +1,7 @@
 # Librerías para la Manipulación de Archivos y Datos
 import sys
 from io import BytesIO
+import time
 import xlwings as xw
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
@@ -58,7 +59,6 @@ def select_file():
             print("No se seleccionó ningún archivo. El programa se cerrará.")
 
 def excel_intermedio(original_file):
-    
     global new_file_path  # Asegurar que estamos utilizando la variable global
 
     try:
@@ -67,30 +67,23 @@ def excel_intermedio(original_file):
         filename = os.path.basename(original_file)
         new_file_path = os.path.join(directory, "copia_" + filename)
 
-        # Verificar si ya existe una copia del archivo
-        if os.path.exists(new_file_path):
-            overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
-            if not overwrite_confirmation:
-                print("Operación cancelada por el usuario.")
-                return
-
         # Copiar el archivo Excel original a la nueva ubicación
         shutil.copy(original_file, new_file_path)
 
-        # Abrir el archivo Excel copiado con xlwings
-        app = xw.App(visible=False)
-        wb = app.books.open(new_file_path)
+        # Verificar que la copia se haya realizado correctamente
+        if not os.path.exists(new_file_path):
+            raise FileNotFoundError("No se pudo crear la copia del archivo.")
 
-        # Cargar el archivo Excel copiado
+        # Cargar el archivo Excel copiado con openpyxl
         workbook = load_workbook(filename=new_file_path)
 
-        # Función para configurar todas las celdas de las hojas al formato de texto.   
+        # Función para configurar todas las celdas de las hojas al formato de texto
         def formato_texto(sheet):
             for row in sheet.iter_rows():
                 for cell in row:
                     cell.number_format = '@'
 
-        ## 1. Función para crear la hoja de errores en el archivo Excel copiado
+        # 1. Función para crear la hoja de errores en el archivo Excel copiado
         def hoja_errores(workbook):
             # Crear hoja llamada 'errores'
             error_sheet = workbook.create_sheet('errores')
@@ -98,47 +91,62 @@ def excel_intermedio(original_file):
             error_sheet['A1'] = 'Nombre de la Manguera:'
             error_sheet['B1'] = 'Página dónde se encuentra:'
             error_sheet['C1'] = 'Motivo del error:'
-            formato_texto(error_sheet) # Asegurar que todas las celdas de la hoja de errores estén en formato texto
+            formato_texto(error_sheet)  # Asegurar que todas las celdas de la hoja de errores estén en formato texto
 
         # Llamar a la función para crear la hoja de errores
         hoja_errores(workbook)
             
-        ## 2. Función para crear la hoja de uniones en el archivo Excel copiado
+        # 2. Función para crear la hoja de uniones en el archivo Excel copiado
         def hoja_uniones(workbook):
             # Crear hoja llamada 'uniones'
             union_sheet = workbook.create_sheet('uniones')
-            formato_texto(union_sheet) # Asegurar que todas las celdas de la hoja de uniones estén en formato texto
+            formato_texto(union_sheet)  # Asegurar que todas las celdas de la hoja de uniones estén en formato texto
 
         # Llamar a la función para crear la hoja de uniones
         hoja_uniones(workbook)
 
-        ## 3. Función para crear la hoja_mangueras_individuales en el archivo Excel copiado
+        # 3. Función para crear la hoja_mangueras_individuales en el archivo Excel copiado
         def hoja_mangueras_individuales(workbook):
             # Crear hoja llamada 'mangueras_individuales'
             mangueras_sheet = workbook.create_sheet('mangueras_individuales')
-            formato_texto(mangueras_sheet) # Asegurar que todas las celdas de la hoja de mangueras estén en formato texto
+            formato_texto(mangueras_sheet)  # Asegurar que todas las celdas de la hoja de mangueras estén en formato texto
 
         # Llamar a la función para crear la hoja de mangueras_individuales
         hoja_mangueras_individuales(workbook)
 
         # Guardar los cambios preliminares en el archivo copiado
         workbook.save(new_file_path)
+        workbook.close()  # Cerrar el archivo después de guardar
 
-        # Llamar a las funciones de filtros
-        filtros_excel(new_file_path) # Llamar a la función de filtros_excel
-        filtros_uniones(new_file_path) # Llamar a la función de filtros_uniones
-        filtros_mangueras_individuales(new_file_path) # Llamar a la función de filtros_mangueras_individuales
+        # Verificar y cerrar cualquier instancia abierta de Excel antes de continuar
+        for app in xw.apps:
+            app.quit()
 
-        # Guardar los cambios
+        # Llamar a las funciones de filtros con xlwings
+        app = xw.App(visible=False)
+        wb = app.books.open(new_file_path)
+
+        filtros_excel(new_file_path)  # Llamar a la función de filtros_excel
+        filtros_uniones(new_file_path)  # Llamar a la función de filtros_uniones
+        filtros_mangueras_individuales(new_file_path)  # Llamar a la función de filtros_mangueras_individuales
+
+        # Guardar los cambios y cerrar con xlwings
         wb.save()
         wb.close()
         app.quit()
 
         return new_file_path  # Devolver new_file_path después de procesar
 
-    except Exception as e:
-        print(f'Ocurrió un error al crear el excel intermedio: {str(e)}')
+    except PermissionError as pe:
+        print(f"Error de permisos al intentar acceder a {new_file_path}: {str(pe)}")
         return None
+    except OSError as oe:
+        print(f"Error al intentar manipular {new_file_path}: {str(oe)}")
+        return None
+    except Exception as e:
+        print(f"Ocurrió un error inesperado: {str(e)}")
+        return None
+    
 # Función para filtrar cambios del archivo Excel
 def filtros_excel(file_path):
 
@@ -418,6 +426,8 @@ encuentra en el nombre
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
 
+        workbook.close()
+
     except Exception as e:
         print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
 
@@ -527,6 +537,8 @@ def filtros_uniones(file_path):
         # Guardar los cambios en el archivo Excel copiado
         workbook.save(filename=file_path)
 
+        workbook.close()
+
     except Exception as e:
         print(f'Ocurrió un error al crear las uniones del Excel: {str(e)}')
 
@@ -571,6 +583,8 @@ def filtros_mangueras_individuales(file_path):
 
         # Guardar los cambios en el archivo Excel
         workbook.save(filename=file_path)
+        
+        workbook.close()
 
     except Exception as e:
         print(f'Ocurrió un error al procesar el archivo Excel: {str(e)}')
