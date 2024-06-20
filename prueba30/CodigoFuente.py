@@ -1,25 +1,25 @@
 # Librerías para la Manipulación de Archivos y Datos
 import sys
-from io import BytesIO
-import xlwings as xw
-from openpyxl import load_workbook
-from openpyxl.utils import column_index_from_string
 import os
 import shutil
+import xlwings as xw
+from io import BytesIO
 from PyPDF2 import PdfMerger 
+from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string
 
 # Librerías para la Creación y Manipulación de Gráficos
 import matplotlib.pyplot as plt  
 import networkx as nx  
-from reportlab.lib.pagesizes import A4, A3
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from PIL import Image, ImageTk
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import A4, A3
 from reportlab.lib import colors
 
 # Librerías para la Interfaz Gráfica
-import customtkinter as ctk  
 from tkinter import filedialog, messagebox 
 from pathlib import Path
+import customtkinter as ctk
 
 
 """ # Ocultar la CMD de Windows al ejecutar el .exe
@@ -55,9 +55,11 @@ def select_file():
         # Llamar a excel_intermedio con la ruta seleccionada
         new_file_path = excel_intermedio(file_path)
         if new_file_path:
-            print(f"Ruta del archivo copiado: {new_file_path}")
+            print(f"Continuar con GENERAR PDF para la generación de diagramas unifilares.")
+            print()
         else:
-            print("No se seleccionó ningún archivo. El programa se cerrará.")
+            print("La aplicación queda a la espera de una nueva selección de archivo.")
+            print()
 
 def excel_intermedio(original_file):
     try:
@@ -70,7 +72,8 @@ def excel_intermedio(original_file):
         if os.path.exists(new_file_path):
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
             if not overwrite_confirmation:
-                print("Operación cancelada por el usuario.")
+                print(f"Operación cancelada por el usuario.")
+                print()
                 return
 
         # Llamar a las funciones de filtros con xlwings
@@ -390,7 +393,7 @@ encuentra en el nombre
         for row_index in sorted(filas_sin_elementos.union(filas_con_errores, interno_error), reverse=True):
             sheet.delete_rows(row_index)
 
-        print(f'Los filtros han sido guardados con éxito en {file_path}, puede continuar para generar los Diagramas Unifilares.')
+        print(f'El archivo de filtros automáticos ha sido generado con éxito.')
         print() 
 
         # Guardar los cambios en el archivo Excel copiado
@@ -399,7 +402,7 @@ encuentra en el nombre
         workbook.close()
 
     except Exception as e:
-        print(f'Ocurrió un error al filtrar los datos del Excel: {str(e)}')
+        print(f'Ocurrió un error al crear los filtros del Excel: {str(e)}')
 
 def filtros_uniones(file_path):
     try:
@@ -557,7 +560,7 @@ def filtros_mangueras_individuales(file_path):
         workbook.close()
 
     except Exception as e:
-        print(f'Ocurrió un error al procesar el archivo Excel: {str(e)}')
+        print(f'Ocurrió un error al crear las mangueras individuales del Excel: {str(e)}')
 
 
 # Función para leer los datos de la hoja 'errores'
@@ -574,7 +577,7 @@ def leer_datos_errores():
         # Cargar el archivo Excel
         workbook = load_workbook(filename=new_file_path)
         if 'errores' not in workbook.sheetnames:
-            messagebox.showinfo("Información", "La hoja 'errores' no existe en el archivo.")
+            messagebox.showinfo("Información", "La hoja 'errores' no existe en el archivo Excel.")
             return []
 
         sheet = workbook['errores']
@@ -587,16 +590,18 @@ def leer_datos_errores():
         return datos_errores
 
     except Exception as e:
-        print(f"Ocurrió un error al leer los datos de la hoja 'errores': {str(e)}")
+        print(f"Ocurrió un error al leer los datos: {str(e)}")
         return []
-
+    
+    
 # Función para procesar el archivo seleccionado
 def process_file():
 
     global new_file_path  # Asegurar que estamos utilizando la variable global
 
     if not new_file_path:
-        print("No se seleccionó ningún archivo. El programa se cerrará.")
+        print("Seleccione un archivo antes de continuar.")
+        print ()
         return
 
     tamaño_hoja = size_var.get()
@@ -642,7 +647,7 @@ def process_file():
                 buf.close()  # Cerrar BytesIO para liberar memoria
                 plt.close(fig)  # Cerrar la figura para liberar memoria
 
-                print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito\n")
+                print(f"El diagrama de unifilares para la fila {idx} se ha generado con éxito.\n")
             else:
                 print(f"No ha sido posible hacer un diagrama para la fila {idx} porque no hay suficientes datos.\n")
 
@@ -678,10 +683,8 @@ def process_file():
         elements.append(table)
         doc.build(elements)
 
-        # Añadir el PDF de la tabla al pdf_merger
-        buf.seek(0)
+        # Añadir tabla al pdf_merger
         pdf_merger.append(buf)
-        buf.close()
 
         ### Configurar la hoja 'errores' para PDF
         sheet_errores = wb.sheets['errores']
@@ -727,21 +730,28 @@ def process_file():
         elements_errores.append(table_errores)
         doc_errores.build(elements_errores)
 
-        # Añadir el PDF de la tabla de errores al pdf_merger
+        # Añadir tabla de errores al pdf_merger
         buf_errores.seek(0)
         pdf_merger.append(buf_errores)
         buf_errores.close()
+
+        # Cerrar y guardar el PDF de la tabla
+        buf.close()
+        wb.close()
+
+        # Eliminar el archivo copia
+        if os.path.exists(new_file_path):
+            os.remove(new_file_path)
 
         # Guardar el archivo PDF combinado
         save_combined_pdf(pdf_merger)
 
     except Exception as e:
-        print(f"Ocurrió un error al procesar el archivo: {str(e)}")
+        print(f"Ocurrió un error al procesar el archivo Excel: {str(e)}")
 
     finally:
 
-        # Cerrar el libro de Excel y la aplicación
-        wb.close()
+        # Cerrar la aplicación xlwings
         app.quit()
 
 
@@ -819,41 +829,31 @@ def save_combined_pdf(pdf_merger):
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
     
     if not pdf_combined_file:
-        messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo. El programa se cerrará.") # El programa se cierra si no se selecciona una ruta
+        messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo.") # El programa se cierra si no se selecciona una ruta
         root.destroy()
     else:
         with open(pdf_combined_file, 'wb') as output_pdf:
             pdf_merger.write(output_pdf)
+
         pdf_merger.close()  # Cerrar el PdfMerger para liberar recursos
 
         # Mensaje de Información al finalizar el proceso
         messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
 
-# Función para mostrar el contenido del archivo de ayuda
-def show_help():
-    help_window = ctk.CTkToplevel(root)
-    help_window.title("Ayuda")
-    help_window.geometry("400x300")
-    
-    help_file_path = Path("docs/ayuda.txt")
-    with help_file_path.open("r", encoding="utf-8") as file:
-        help_text = file.read()
-    
-    text_widget = ctk.CTkTextbox(help_window, wrap='word', height=300, width=400)
-    text_widget.pack(padx=10, pady=10, expand=True, fill='both')
-    text_widget.insert("1.0", help_text)
-    text_widget.configure(state='disabled')
-
-
-###### Configuración de la apariencia de la ventana principal con customtkinter #####
+###### Configuración de la apariencia de la ventana principal #####
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
 root = ctk.CTk() # Crear la ventana principal
-root.title("Generador de Diagramas Unifilares")
+root.title("ENK Generador de Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
+
+# Cargar el logo y configurarlo como icono de la aplicación
+icon_path = "GeneradorUnifilares/assets/images/isotipo2.png"  # Reemplaza con la ruta de tu logo
+icon = ctk.PhotoImage(file=icon_path)
+root.iconphoto(True, icon)
 
 # Botón 'Examinar'
 ctk.CTkLabel(root, text="Seleccionar archivo del Excel:").grid(row=0, column=0, padx=10, pady=10)
@@ -873,19 +873,32 @@ size_combobox.grid(row=1, column=1, padx=10, pady=10)
 # Botón 'Salir'
 ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
 
-# Cuadro de texto
-text_widget = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
-text_widget.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+# Botón de 'Ayuda'
+ruta_imagen_ayuda = Path("GeneradorUnifilares/assets/images/icon_help.png")
+imagen_ayuda = Image.open(ruta_imagen_ayuda)
+imagen_ayuda = imagen_ayuda.resize((32, 32))
+icono_ayuda = ctk.CTkImage(imagen_ayuda) # Convertir a CTkImage
 
-sys.stdout = RedirectStdout(text_widget)
+ruta_archivo_ayuda = Path("GeneradorUnifilares/docs/ayuda/ManualUso.pdf") # Ruta del archivo de ayuda
+boton_ayuda = ctk.CTkButton(root, image=icono_ayuda, text="", width=32, height=32, 
+                            command=lambda: os.startfile(ruta_archivo_ayuda))
+boton_ayuda.place(relx=1.0, rely=1.0, x=-20, y=-20, anchor='se') 
 
-# Botón de ayuda en la esquina inferior derecha
-help_image_path = Path("assets/images/icon_help.png")
-help_image = Image.open(help_image_path)
-help_image = help_image.resize((32, 32))  
-help_icon = ImageTk.PhotoImage(help_image)
-help_button = ctk.CTkButton(root, image=help_icon, text="", command=show_help, width=32, height=32)
-help_button.place(relx=1.0, rely=1.0, x=-20, y=-20, anchor='se')  # Ubicar en la esquina inferior derecha
+# Versión del software
+version_text = "Versión 1.0"  # Versión actual del software
+ctk.CTkLabel(root, text=version_text).grid(row=5, column=0, sticky='w', padx=10, pady=10)
+
+# Cuadro de texto principal
+texto_widget_principal = ctk.CTkTextbox(root, wrap='word', height=200, width=600)
+texto_widget_principal.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
+
+# Botón para limpiar el texto
+boton_limpiar = ctk.CTkButton(root, text="Limpiar", fg_color="transparent", border_color="grey", border_width=2.5,
+                              command=lambda: texto_widget_principal.delete(1.0, ctk.END))
+boton_limpiar.place(relx=0.05, rely=0.77, anchor='sw')
+
+# Redirigir stdout al widget de texto principal
+sys.stdout = RedirectStdout(texto_widget_principal)
 
 # Mantener la ventana abierta y a la espera de eventos (clics de ratón, pulsaciones de teclas, etc.)
 root.mainloop()
