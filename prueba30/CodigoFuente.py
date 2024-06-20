@@ -11,10 +11,10 @@ from openpyxl.utils import column_index_from_string
 # Librerías para la Creación y Manipulación de Gráficos
 import matplotlib.pyplot as plt  
 import networkx as nx  
-from PIL import Image, ImageTk
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib.pagesizes import A4, A3
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+from PIL import Image
 
 # Librerías para la Interfaz Gráfica
 from tkinter import filedialog, messagebox 
@@ -850,10 +850,8 @@ root = ctk.CTk() # Crear la ventana principal
 root.title("ENK Generador de Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
-# Cargar el logo y configurarlo como icono de la aplicación
-icon_path = "GeneradorUnifilares/assets/images/isotipo2.png"  # Reemplaza con la ruta de tu logo
-icon = ctk.PhotoImage(file=icon_path)
-root.iconphoto(True, icon)
+# Logo icono ventana
+root.iconbitmap('GeneradorUnifilares/assets/images/isotipo2.ico')
 
 # Botón 'Examinar'
 ctk.CTkLabel(root, text="Seleccionar archivo del Excel:").grid(row=0, column=0, padx=10, pady=10)
