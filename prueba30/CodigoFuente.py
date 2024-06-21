@@ -41,30 +41,38 @@ class RedirectStdout:
     def flush(self):
         pass
 
-# Variable global para almacenar la ruta del archivo procesado
-new_file_path = ""
+new_file_path = "" # Variable global para almacenar la ruta del archivo procesado
 
 # Función para seleccionar un archivo Excel
 def select_file():
+
     global new_file_path  # Asegurar que estamos utilizando la variable global
 
     file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xls;*.xlsx")])
 
     if file_path:
+
         file_entry.delete(0, ctk.END)
         file_entry.insert(0, file_path)
 
         # Llamar a excel_intermedio con la ruta seleccionada
         new_file_path = excel_intermedio(file_path)
+
         if new_file_path:
+
             print(f"Continuar con GENERAR PDF para la generación de diagramas unifilares.")
             print()
+
         else:
+
             print("La aplicación queda a la espera de una nueva selección de archivo.")
             print()
 
+# Función para duplicar un archivo Excel
 def excel_intermedio(original_file):
+
     try:
+
         # Determinar la ruta para la copia del archivo
         directory = os.path.dirname(original_file)
         filename = os.path.basename(original_file)
@@ -72,36 +80,39 @@ def excel_intermedio(original_file):
 
         # Verificar si ya hay una copia
         if os.path.exists(new_file_path):
+
             overwrite_confirmation = messagebox.askyesno("Advertencia", "Ya existe una copia del archivo. ¿Desea sobrescribirlo?")
+
             if not overwrite_confirmation:
+
                 print(f"Operación cancelada por el usuario.")
                 print()
+
                 return
 
-        # Llamar a las funciones de filtros con xlwings
-        shutil.copy(original_file, new_file_path)
+        shutil.copy(original_file, new_file_path) # Llamar a las funciones de filtros
 
-        # Cargar el archivo Excel copiado con openpyxl
-        workbook = load_workbook(filename=new_file_path)
+        workbook = load_workbook(filename=new_file_path) # Cargar el Excel copiado
 
-        # 1. Función para crear la hoja de errores en el archivo Excel copiado
+        # 1. Función para crear la hoja de errores en el Excel copiado
         def hoja_errores(workbook):
-            # Crear hoja llamada 'errores'
-            error_sheet = workbook.create_sheet('errores')
+
+            error_sheet = workbook.create_sheet('errores') # Crear hoja llamada 'errores'
+
             # Añadir columnas
             error_sheet['A1'] = 'Nombre de la Manguera:'
             error_sheet['B1'] = 'Página dónde se encuentra:'
             error_sheet['C1'] = 'Motivo del error:'
 
-        # 2. Función para crear la hoja de uniones en el archivo Excel copiado
+        # 2. Función para crear la hoja de uniones en el Excel copiado
         def hoja_uniones(workbook):
-            # Crear hoja llamada 'uniones'
-            union_sheet = workbook.create_sheet('uniones')
 
-        # 3. Función para crear la hoja_mangueras_individuales en el archivo Excel copiado
+            union_sheet = workbook.create_sheet('uniones') # Crear hoja llamada 'uniones'
+
+        # 3. Función para crear la hoja_mangueras_individuales en el Excel copiado
         def hoja_mangueras_individuales(workbook):
-            # Crear hoja llamada 'mangueras_individuales'
-            mangueras_sheet = workbook.create_sheet('mangueras_individuales')
+
+            mangueras_sheet = workbook.create_sheet('mangueras_individuales') # Crear hoja llamada 'mangueras_individuales'
 
         # Llamar funciones:
         hoja_errores(workbook)
@@ -118,6 +129,7 @@ def excel_intermedio(original_file):
         filtros_mangueras_individuales(new_file_path)
 
     except Exception as e:
+
         print(f'Ocurrió un error al crear el excel intermedio: {str(e)}')
 
     return new_file_path # Devolver new_file_path después de procesar
@@ -126,11 +138,10 @@ def excel_intermedio(original_file):
 def filtros_excel(file_path):
 
     try:
-        # Cargar el archivo Excel copiado
-        workbook = load_workbook(filename=file_path)
 
-        # Hoja activa
-        sheet = workbook.active
+        workbook = load_workbook(filename=file_path) # Cargar el archivo Excel copiado
+
+        sheet = workbook.active # Hoja activa
 
         # Rango de celdas de la hoja
         max_row = sheet.max_row
@@ -154,6 +165,7 @@ def filtros_excel(file_path):
 
                 if empty_cell_count >= 4:
                     filas_sin_elementos.add(row)
+
                     break  # Salir del bucle si hay 4 o más celdas vacías
 
         ## 2. Eliminar -W en columnas D y O (si no coincide, a errores)
@@ -188,12 +200,15 @@ def filtros_excel(file_path):
                     first_value_O = None  # Variable temporal para almacenar el primer valor
 
                     for value in values_O:
+
                         if not value.startswith("-W"):
                             first_value_O = value
+
                             break
 
                     if first_value_O is not None:
                         sheet.cell(row=row, column=15).value = first_value_O  # Actualizar la celda en la columna O solo si es necesario
+
                     else:
                         elementos_no_encontrados.add(row)
 
@@ -217,7 +232,9 @@ def filtros_excel(file_path):
 
         ## 4. Comprobar contenido de las celdas de las columnas B, C, D, M, N, O con la columna H (si no, a errores)
         for row in range(1, sheet.max_row + 1):
+
             value_column_H = sheet.cell(row=row, column=8).value
+
             if value_column_H and "/" in value_column_H:
                 split_values_H = value_column_H.split("/")
 
@@ -225,11 +242,14 @@ def filtros_excel(file_path):
                 value_column_B = sheet.cell(row=row, column=2).value
                 if value_column_B:
                     updated_B = False
+
                     for subvalue in value_column_B.split():
+
                         if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=2).value = subvalue
                             updated_B = True
                             break
+
                     if not updated_B:
                         filas_con_errores.add(row)
 
@@ -237,11 +257,14 @@ def filtros_excel(file_path):
                 value_column_C = sheet.cell(row=row, column=3).value
                 if value_column_C:
                     updated_C = False
+
                     for subvalue in value_column_C.split():
                         if subvalue in split_values_H[0]:
+
                             sheet.cell(row=row, column=3).value = subvalue
                             updated_C = True
                             break
+
                     if not updated_C:
                         filas_con_errores.add(row)
 
@@ -249,11 +272,13 @@ def filtros_excel(file_path):
                 value_column_D = sheet.cell(row=row, column=4).value
                 if value_column_D:
                     updated_D = False
+
                     for subvalue in value_column_D.split():
                         if subvalue in split_values_H[0]:
                             sheet.cell(row=row, column=4).value = subvalue
                             updated_D = True
                             break
+
                     if not updated_D:
                         filas_con_errores.add(row)
 
@@ -261,11 +286,14 @@ def filtros_excel(file_path):
                 value_column_M = sheet.cell(row=row, column=13).value
                 if value_column_M:
                     updated_M = False
+
                     for subvalue in value_column_M.split():
+
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=13).value = subvalue
                             updated_M = True
                             break
+                        
                     if not updated_M:
                         filas_con_errores.add(row)
 
@@ -273,11 +301,14 @@ def filtros_excel(file_path):
                 value_column_N = sheet.cell(row=row, column=14).value
                 if value_column_N:
                     updated_N = False
+
                     for subvalue in value_column_N.split():
+
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=14).value = subvalue
                             updated_N = True
                             break
+
                     if not updated_N:
                         filas_con_errores.add(row)
 
@@ -285,11 +316,14 @@ def filtros_excel(file_path):
                 value_column_O = sheet.cell(row=row, column=15).value
                 if value_column_O:
                     updated_O = False
+
                     for subvalue in value_column_O.split():
+                        
                         if subvalue in split_values_H[1]:
                             sheet.cell(row=row, column=15).value = subvalue
                             updated_O = True
                             break
+
                     if not updated_O:
                         filas_con_errores.add(row)
 
@@ -322,14 +356,12 @@ def filtros_excel(file_path):
             value = cell.value
 
             if value and isinstance(value, str):
-                # Reemplazar "/ " por "/\n"
-                new_value = value.replace("/", "/\n")
+                
+                new_value = value.replace("/", "/\n") # Reemplazar "/ " por "/\n"
 
-                # Asignar el nuevo valor a la celda
-                cell.value = new_value
+                cell.value = new_value # Asignar el nuevo valor a la celda
 
-        #  (corregir)
-        #  Eliminar el "=" de las celdas en columnas A, H, K, L
+        # Eliminar el "=" de las celdas en columnas A, H, K, L
         columns_to_process = [1, 8, 11, 12]   
 
         for row in range(1, sheet.max_row + 1):
@@ -338,6 +370,7 @@ def filtros_excel(file_path):
                 cell_value = sheet.cell(row=row, column=col).value
 
                 if isinstance(cell_value, str) and cell_value.startswith('='):
+
                     sheet.cell(row=row, column=col).value = cell_value.lstrip('=')
 
         # Crear hoja llamada 'errores' si no existe
@@ -407,6 +440,7 @@ encuentra en el nombre
         print(f'Ocurrió un error al crear los filtros del Excel: {str(e)}')
 
 def filtros_uniones(file_path):
+
     try:
         # Cargar el archivo Excel copiado
         workbook = load_workbook(filename=file_path)
@@ -416,6 +450,7 @@ def filtros_uniones(file_path):
         
         if 'uniones' not in workbook.sheetnames:
             union_sheet = workbook.create_sheet('uniones')
+
         else:
             union_sheet = workbook['uniones']
 
@@ -501,16 +536,14 @@ def filtros_uniones(file_path):
 
         # Ordenar por longitud de filas descendente
         merged_data.sort(key=lambda x: len(x), reverse=True)
-
-        # Limpiar cualquier dato existente en la hoja 'uniones'
-        union_sheet.delete_rows(1, union_sheet.max_row)
+        
+        union_sheet.delete_rows(1, union_sheet.max_row) # Limpiar cualquier dato existente en la hoja 'uniones'
 
         # Escribir las filas unidas ordenadas en la hoja 'uniones'
         for row in merged_data:
             union_sheet.append(row)
 
-        # Guardar los cambios en el archivo Excel copiado
-        workbook.save(filename=file_path)
+        workbook.save(filename=file_path) # Guardar los cambios en el Excel copiado
 
         workbook.close()
 
@@ -519,9 +552,9 @@ def filtros_uniones(file_path):
 
 
 def filtros_mangueras_individuales(file_path):
+
     try:
 
-        # Cargar el archivo Excel
         workbook = load_workbook(filename=file_path)
 
         # Obtener la hoja 'uniones' y crear la hoja 'hoja_mangueras_individuales' si no existe
@@ -556,8 +589,7 @@ def filtros_mangueras_individuales(file_path):
 
             row_idx += 1
 
-        # Guardar los cambios en el archivo Excel
-        workbook.save(filename=file_path)
+        workbook.save(filename=file_path)  # Guardar los cambios en el Excel
         
         workbook.close()
 
@@ -574,10 +606,12 @@ def leer_datos_errores():
         # Verificar que new_file_path no sea None
         if not new_file_path:
             messagebox.showinfo("Información", "No se ha seleccionado ningún archivo para procesar.")
+
             return []
 
         # Cargar el archivo Excel
         workbook = load_workbook(filename=new_file_path)
+
         if 'errores' not in workbook.sheetnames:
             messagebox.showinfo("Información", "La hoja 'errores' no existe en el archivo Excel.")
             return []
@@ -586,6 +620,7 @@ def leer_datos_errores():
 
         # Obtener los datos de la hoja 'errores'
         datos_errores = []
+
         for row in sheet.iter_rows(min_row=2, values_only=True):
             datos_errores.append(row)
 
@@ -603,7 +638,8 @@ def process_file():
 
     if not new_file_path:
         print("Seleccione un archivo antes de continuar.")
-        print ()
+        print()
+
         return
 
     tamaño_hoja = size_var.get()
@@ -621,7 +657,7 @@ def process_file():
 
         wb = app.books.open(new_file_path)  # Utilizar new_file_path
 
-        ### Procesar la hoja 'uniones'
+        # Procesar la hoja 'uniones'
         sheet_uniones = wb.sheets['uniones']
         df_uniones = sheet_uniones.used_range.value
 
@@ -659,8 +695,11 @@ def process_file():
 
         # Preparar los datos para la tabla
         data = [['Elemento Origen', 'Manguera', 'Elemento Destino']]
+
         for idx, row in enumerate(df_mangueras, start=1):
+
             if len(row) == 3:
+
                 elemento_origen = row[0]
                 manguera = row[1]
                 elemento_destino = row[2]
@@ -680,6 +719,7 @@ def process_file():
 
         # Configurar el estilo de tabla
         style_table = TableStyle([
+
             ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro horizontalmente
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alinear todo al centro verticalmente
@@ -690,13 +730,16 @@ def process_file():
 
         # Crear el título
         title_text = "Tabla de conexiones de mangueras individuales"
+
         title_style = ParagraphStyle(
+
             name='TitleStyle',
             fontSize=16,
             textColor=colors.black,
             alignment=1,  # 0=left, 1=center, 2=right
             spaceAfter=20  # Espacio después del párrafo
         )
+
         title = Paragraph(title_text, title_style)
 
         # Crear la tabla con los datos y estilo configurados
@@ -707,12 +750,9 @@ def process_file():
         buf = BytesIO()
         doc = SimpleDocTemplate(buf, pagesize=letter)
         elements = [title, table]
-
-        # Construir el PDF
-        doc.build(elements)
-
-        # Añadir buf al pdf_merger (suponiendo que pdf_merger es una lista donde se van añadiendo los PDFs)
-        pdf_merger.append(buf)
+        
+        doc.build(elements) # Construir el PDF
+        pdf_merger.append(buf) # Añadir buf al pdf_merger
 
 
         # Configurar la hoja 'errores' para PDF
@@ -729,11 +769,11 @@ def process_file():
         sheet_errores.header_margin = 0.5
         sheet_errores.footer_margin = 0.5
 
-        # Leer datos de la hoja 'errores'
-        datos_errores = sheet_errores.used_range.value[1:]  # Excluir el encabezado
+        datos_errores = sheet_errores.used_range.value[1:] # Leer datos de la hoja 'errores'
 
         # Configurar estilo de la tabla
         style_errores = TableStyle([
+
             ('BACKGROUND', (0, 0), (-1, 0), colors.skyblue),  # Color de fondo para encabezado
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Alinear todo al centro horizontalmente
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  # Alinear todo al centro verticalmente
@@ -744,24 +784,31 @@ def process_file():
 
         # Verificar y ajustar la segunda columna ('Página donde se encuentra')
         for fila in datos_errores:
+
             if len(fila) > 1:  # Asegurar que haya al menos dos elementos en la fila
+
                 if fila[1] is not None and not fila[1].startswith('=='):
+
                     fila[1] = '==' + fila[1]
 
         # Añadir títulos a los datos de errores si no están ya presentes
         titulo = ['Nombre de la Manguera', 'Página donde se encuentra', 'Motivo del error']
+
         if datos_errores[0] != titulo:
             datos_errores.insert(0, titulo)
 
         # Crear el título
         title_text = "Tabla de mangueras erróneas y sus motivos"
+
         title_style = ParagraphStyle(
+
             name='TitleStyle',
             fontSize=16,
             textColor=colors.black,
             alignment=1,  # 0=left, 1=center, 2=right
             spaceAfter=20  # Espacio después del párrafo
         )
+
         title = Paragraph(title_text, title_style)
 
         # Crear la tabla de errores con los datos y estilo configurados
@@ -773,8 +820,7 @@ def process_file():
         doc_errores = SimpleDocTemplate(buf_errores, pagesize=A4)
         elements_errores = [title, table_errores]
 
-        # Construir el PDF de la tabla de errores
-        doc_errores.build(elements_errores)
+        doc_errores.build(elements_errores) # Construir el PDF de la tabla de errores
 
         # Añadir tabla de errores al pdf_merger
         buf_errores.seek(0)
@@ -818,6 +864,7 @@ def create_graph_from_row(row):
     
     # Agregar nodos al grafo G
     for cell in row:
+
         if cell is not None:  # Verificar si el valor de la celda no es None
             G.add_node(cell)
 
@@ -825,12 +872,15 @@ def create_graph_from_row(row):
     for i in range(len(row) - 1):
         if row[i] is not None and row[i + 1] is not None:  # Verificar que los valores no son None
             G.add_edge(row[i], row[i + 1])
+
     return G
 
 
 # Función para generar posiciones de los nodos
 def generate_positions(G, x_position_max, tamaño_hoja):
+
     pos = {}
+
     x_position, y_position = 0, 0
     max_nodes_per_row = 3 if tamaño_hoja == 'A4' else 5
 
@@ -840,6 +890,7 @@ def generate_positions(G, x_position_max, tamaño_hoja):
         if (x_position + 1) % max_nodes_per_row == 0:
             x_position = 1  # Empezar desde 1 en la siguiente fila
             y_position -= 1
+
         else:
             x_position += 1
 
@@ -867,16 +918,20 @@ def draw_graph(G, pos, ax):
         nx.draw_networkx_labels(G, pos, labels={node: labeled_node}, font_size=6, ax=ax)
 
     nx.draw_networkx_edges(G, pos)
+
     ax.axis('off')
 
 
 # Función para guardar el archivo PDF combinado
 def save_combined_pdf(pdf_merger):
+
     pdf_combined_file = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
     
     if not pdf_combined_file:
         messagebox.show_warning("No se seleccionó ninguna ruta para guardar el archivo.") # El programa se cierra si no se selecciona una ruta
+        
         root.destroy()
+
     else:
         with open(pdf_combined_file, 'wb') as output_pdf:
             pdf_merger.write(output_pdf)
