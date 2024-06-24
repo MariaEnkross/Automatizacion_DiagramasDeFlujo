@@ -945,12 +945,20 @@ def save_combined_pdf(pdf_merger):
         # Mensaje de Información al finalizar el proceso
         messagebox.showinfo("Información", f"El archivo PDF se ha generado correctamente en: {pdf_combined_file}\n")
 
+
+# Función para obtener la ruta del recurso
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 # Configuración de la apariencia de la ventana principal
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
-
-# Directorio base de tu aplicación
-base_dir = os.path.dirname(os.path.abspath(__file__))  # Obtener el directorio actual del script
 
 # Crear la ventana principal
 root = ctk.CTk()
@@ -958,7 +966,7 @@ root.title("ENK Generador de Unifilares")
 root.resizable(False, False)  # Desactivar redimensionamiento
 
 # Icono de la ventana
-icon_path = "ENK_Generador_Unifilares/images/isotipo48_48.ico"
+icon_path = resource_path("ENK_Generador_Unifilares/images/isotipo48_48.ico")
 root.iconbitmap(icon_path)
 
 # Botón 'Examinar'
@@ -975,17 +983,17 @@ ctk.CTkLabel(root, text="Seleccionar tamaño de hoja:").grid(row=1, column=0, pa
 size_var = ctk.StringVar(value="A4")
 size_combobox = ctk.CTkComboBox(root, variable=size_var, values=["A4", "A3"])
 size_combobox.grid(row=1, column=1, padx=10, pady=10)
- 
+
 # Botón 'Salir'
 ctk.CTkButton(root, text="Salir", command=root.quit).grid(row=4, column=0, columnspan=3, pady=10)
 
-# Boton 'Ayuda'
-ruta_imagen_ayuda = "ENK_Generador_Unifilares/images/icon_help.png"
+# Botón 'Ayuda'
+ruta_imagen_ayuda = resource_path("ENK_Generador_Unifilares/images/icon_help.png")
 help_icon_image = Image.open(ruta_imagen_ayuda)
 help_icon = ctk.CTkImage(light_image=help_icon_image, dark_image=help_icon_image, size=(20, 20))
 
 # Crear el botón de ayuda y definir la acción directamente
-pdf_path = os.path.abspath("ENK_Generador_Unifilares/docs/ayuda/ManualUso.pdf")
+pdf_path = resource_path("ENK_Generador_Unifilares/docs/ayuda/ManualUso.pdf")
 
 # Crear el botón de ayuda
 help_button = ctk.CTkButton(
@@ -1000,7 +1008,6 @@ help_button = ctk.CTkButton(
     border_width=0
 )
 help_button.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)
-
 
 # Versión del software
 version_text = "Versión 1.0"  # Versión actual del software

@@ -5,7 +5,7 @@ a = Analysis(
     ['CodigoFuente.py'],
     pathex=[],
     binaries=[],
-    datas=[('ENK_Generador_Unifilares\\docs\\ayuda\\ManualUso.pdf', 'docs/ayuda'), ('ENK_Generador_Unifilares\\images\\icon_help.png', 'images'), ('ENK_Generador_Unifilares\\images\\isotipo48_48.ico', 'images')],
+    datas=[('ENK_Generador_Unifilares/images/isotipo48_48.ico', 'ENK_Generador_Unifilares/images'), ('ENK_Generador_Unifilares/images/icon_help.png', 'ENK_Generador_Unifilares/images'), ('ENK_Generador_Unifilares/docs/ayuda/ManualUso.pdf', 'ENK_Generador_Unifilares/docs/ayuda')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
